@@ -12,6 +12,8 @@ gem 'sinatra-activerecord', '~> 2.0'
 gem 'sinatra-contrib', '~> 2.1'
 gem 'webrick', '~> 1.7'
 
+gem 'dotenv', '~> 2.7', '>= 2.7.2'
+
 group :development do
   gem 'debase'
   gem 'fastri'
