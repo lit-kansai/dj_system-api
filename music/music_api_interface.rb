@@ -12,12 +12,12 @@ module Music
     end
 
     # プレイリスト一覧を取得
-    def get_playlists()
+    def playlists()
       raise NotImplementedError
     end
 
     # プレイリストの楽曲一覧を取得
-    def get_playlist_songs(playlist_id)
+    def get_playlist_tracks(playlist_id)
       raise NotImplementedError
     end
 
@@ -27,12 +27,12 @@ module Music
     end
 
     # 楽曲をプレイリストに追加
-    def add_song_to_playlist(playlist_id, song_id)
+    def add_track_to_playlist(playlist_id, track_id)
       raise NotImplementedError
     end
 
     # 楽曲をプレイリストから削除
-    def remove_song_from_playlist(playlist_id, song_id)
+    def remove_track_from_playlist(playlist_id, track_id)
       raise NotImplementedError
     end
 
@@ -43,8 +43,8 @@ module Music
         raise NotImplementedError
       end
 
-      # codeを元にインスタンスを生成
-      def build(code, redirect_uri)
+      # codeを元にtokenを取得
+      def get_token_by_code(code, state, redirect_uri)
         raise NotImplementedError
       end
     end

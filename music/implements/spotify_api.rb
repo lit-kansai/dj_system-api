@@ -17,7 +17,7 @@ module Music
     def search(query)
       res = @spotify_api.get 'search', { q: query, type: 'track' }
       body = JSON.parse(res.body)
-      data = body['tracks']['items'].map { |track|
+      body['tracks']['items'].map { |track|
         {
           id: track['id'],
           artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
@@ -28,6 +28,40 @@ module Music
           name: track['name'],
         }
       }
+    end
+
+    def playlists()
+      res = @spotify_api.get 'me/playlists'
+      body = JSON.parse(res.body)
+      body['items'].map { |playlist|
+        {
+          id: playlist['id'],
+          name: playlist['name'],
+          image_url: playlist['images'].first['url'],
+          description: playlist['description'],
+          original_url: playlist['external_urls']['spotify'],
+          owner: {
+            id: playlist['owner']['id'],
+            name: playlist['owner']['display_name'],
+          }
+        }
+      }
+    end
+
+    def get_playlist_tracks(playlist_id)
+      raise NotImplementedError
+    end
+
+    def create_playlist(name)
+      raise NotImplementedError
+    end
+
+    def add_track_to_playlist(playlist_id, track_id)
+      raise NotImplementedError
+    end
+
+    def remove_track_from_playlist(playlist_id, track_id)
+      raise NotImplementedError
     end
 
     class << self
@@ -43,7 +77,7 @@ module Music
         'https://accounts.spotify.com/authorize?' + query.to_param
       end
 
-      def build(code, state, redirect_uri)
+      def get_token_by_code(code, state,redirect_uri)
         if code === nil || code === ""
           raise ArgumentError, "invalid code"
         end
@@ -65,7 +99,7 @@ module Music
           req.body = params.to_query
         end
 
-        return self.new(JSON.parse(res.body)['access_token'])
+        return JSON.parse(res.body)
       end
     end
   end
