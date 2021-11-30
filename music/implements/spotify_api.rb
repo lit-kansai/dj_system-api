@@ -26,6 +26,7 @@ module Music
             jacket_url: track['album']['images'].first['url'],
           },
           name: track['name'],
+          duration: (track['duration_ms'] / 1000).ceil,
         }
       }
     end
@@ -49,6 +50,8 @@ module Music
     end
 
     def get_playlist_tracks(playlist_id)
+      res = @spotify_api.get "playlists/#{playlist_id}/tracks"
+      body = JSON.parse(res.body)
       raise NotImplementedError
     end
 
