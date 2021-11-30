@@ -1,4 +1,9 @@
 require 'dotenv'
+require 'oauth2'
+require 'active_support'
+require 'active_support/core_ext'
+require 'faraday'
+
 Dotenv.load
 
 require "./music/music.rb"
@@ -16,7 +21,7 @@ puts "認証が完了したら、URLのクエリにあるcodeを入力してく�
 
 code = gets.chomp
 
-music = Music::SpotifyApi.build(code, REDIRECT_URL)
+music = Music::SpotifyApi.build(code, 'test', REDIRECT_URL)
 puts music.access_token
 
 # music.search("シュガーハイウェイ")

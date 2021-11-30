@@ -11,15 +11,8 @@ gem 'sinatra', '~> 2.1'
 gem 'sinatra-activerecord', '~> 2.0'
 gem 'sinatra-contrib', '~> 2.1'
 gem 'webrick', '~> 1.7'
+gem "rspotify", "~> 2.11"
 
-gem 'dotenv', '~> 2.7', '>= 2.7.2'
+gem "oauth2", "~> 1.4"
 
-group :development do
-  gem 'debase'
-  gem 'fastri'
-  gem 'pry'
-  gem 'rcodetools'
-  gem 'rubocop'
-  gem 'rubocop-performance'
-  gem 'ruby-debug-ide'
-end
+gem "faraday", "~> 1.8"
