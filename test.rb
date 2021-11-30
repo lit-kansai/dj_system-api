@@ -3,6 +3,7 @@ require 'oauth2'
 require 'active_support'
 require 'active_support/core_ext'
 require 'faraday'
+require 'rspotify'
 
 Dotenv.load
 
@@ -24,4 +25,4 @@ code = gets.chomp
 music = Music::SpotifyApi.build(code, 'test', REDIRECT_URL)
 puts music.access_token
 
-# music.search("シュガーハイウェイ")
+puts music.search("シュガーハイウェイ").to_json

@@ -2,11 +2,33 @@ require 'base64'
 
 module Music
   class SpotifyApi < ApiInterface
+    API_ENDPOINT = 'https://api.spotify.com/v1/'
+
     SCOPES = ['playlist-read-private', 'playlist-read-collaborative', 'playlist-modify-public', 'playlist-modify-private']
 
     def initialize(access_token)
+      @access_token = access_token
+
+      @spotify_api = Faraday.new(:url => API_ENDPOINT)
+      @spotify_api.headers['Authorization'] = "Bearer #{access_token}"
+      @spotify_api.headers['Content-Type'] = 'application/json'
     end
 
+    def search(query)
+      res = @spotify_api.get 'search', { q: query, type: 'track' }
+      body = JSON.parse(res.body)
+      data = body['tracks']['items'].map { |track|
+        {
+          id: track['id'],
+          artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
+          album: {
+            name: track['album']['name'],
+            jacket_url: track['album']['images'].first['url'],
+          },
+          name: track['name'],
+        }
+      }
+    end
 
     class << self
       def get_redirect_url(client_id, client_secret, redirect_uri)
