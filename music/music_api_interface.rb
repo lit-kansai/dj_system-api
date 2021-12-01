@@ -39,7 +39,7 @@ module Music
     # クラスメソッド
     class << self
       # リダイレクトURLを返す
-      def get_redirect_url(client_id, client_secret, redirect_uri)
+      def get_oauth_url(redirect_uri)
         raise NotImplementedError
       end
 

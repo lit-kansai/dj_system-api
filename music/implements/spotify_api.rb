@@ -49,10 +49,16 @@ module Music
       }
     end
 
+    def get_playlist(playlist_id)
+      res = @spotify_api.get "playlists/#{playlist_id}"
+      body = JSON.parse(res.body)
+      body
+    end
+
     def get_playlist_tracks(playlist_id)
       res = @spotify_api.get "playlists/#{playlist_id}/tracks"
       body = JSON.parse(res.body)
-      raise NotImplementedError
+      body
     end
 
     def create_playlist(name)
@@ -68,7 +74,7 @@ module Music
     end
 
     class << self
-      def get_redirect_url(client_id, client_secret, redirect_uri)
+      def get_oauth_url(redirect_uri)
         query = {
           response_type: 'code',
           client_id: ENV['SPOTIFY_API_CLIENT_ID'],
