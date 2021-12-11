@@ -2,8 +2,7 @@ require 'bundler/setup'
 Bundler.require
 require 'sinatra/reloader' if development?
 Dotenv.load
-require "./music/music.rb"
-require "./google.rb"
+require "./lib/music/music.rb"
 
 enable :sessions
 
