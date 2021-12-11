@@ -24,7 +24,10 @@ get '/menu/spotify' do
   '<a href="/api/spotify/search?q=しわあわせ">曲検索（しわあわせ）</a><br>
   <a href="/api/spotify/playlists">プレイリスト一覧</a><br>
   <a href="/api/spotify/playlist">プレイリスト詳細</a><br>
-  <a href="/api/spotify/create_playlist?name=テスト">プレイリスト作成（テスト）</a>'
+  <a href="/api/spotify/playlist/tracks">プレイリスト楽曲一覧</a><br>
+  <a href="/api/spotify/create_playlist?name=テスト">プレイリスト作成（テスト）</a><br>
+  <a href="/api/spotify/add_track_to_playlist?q=しわあわせ">プレイリスト楽曲追加</a><br>
+  <a href="/api/spotify/remove_track_from_playlist?q=しわあわせ">プレイリスト楽曲削除</a>'
 end
 
 get '/api/spotify/search' do
@@ -36,25 +39,37 @@ end
 get '/api/spotify/playlists' do
   redirect '/' unless session[:spotify_token]
   content_type :json
-  request['music_api'].playlists.to_json
+  request['music_api'].get_playlists.to_json
 end
 
 get '/api/spotify/playlist' do
   redirect '/' unless session[:spotify_token]
   content_type :json
-  request['music_api'].get_playlist(request['music_api'].playlists.first[:id]).to_json
+  request['music_api'].get_playlist(request['music_api'].get_playlists.first[:id]).to_json
 end
 
 get '/api/spotify/playlist/tracks' do
   redirect '/' unless session[:spotify_token]
   content_type :json
-  request['music_api'].get_playlist_tracks(request['music_api'].playlists.first[:id]).to_json
+  request['music_api'].get_playlist_tracks(request['music_api'].get_playlists.first[:id]).to_json
 end
 
 get '/api/spotify/create_playlist' do
   redirect '/' unless session[:spotify_token]
   content_type :json
   request['music_api'].create_playlist(params[:name]).to_json
+end
+
+get '/api/spotify/add_track_to_playlist' do
+  redirect '/' unless session[:spotify_token]
+  content_type :json
+  request['music_api'].add_track_to_playlist(request['music_api'].get_playlists.first[:id], request['music_api'].search(params[:q]).first[:id]).to_json
+end
+
+get '/api/spotify/remove_track_from_playlist' do
+  redirect '/' unless session[:spotify_token]
+  content_type :json
+  request['music_api'].remove_track_from_playlist(request['music_api'].get_playlists.first[:id], request['music_api'].search(params[:q]).first[:id]).to_json
 end
 
 get '/api/spotify/callback' do

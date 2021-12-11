@@ -17,9 +17,10 @@ module Music
     def search(query)
       res = @spotify_api.get 'search', { q: query, type: 'track' }
       body = JSON.parse(res.body)
+      puts body
       body['tracks']['items'].map { |track|
         {
-          id: track['id'],
+          id: track['uri'],
           artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
           album: {
             name: track['album']['name'],
@@ -31,16 +32,16 @@ module Music
       }
     end
 
-    def playlists()
+    def get_playlists()
       res = @spotify_api.get 'me/playlists'
       body = JSON.parse(res.body)
       body['items'].map { |playlist|
+        image_url = playlist['images'].first['url'] if playlist['images'].first != nil
         {
           id: playlist['id'],
           name: playlist['name'],
-          image_url: playlist['images'].first['url'],
+          image_url: image_url,
           description: playlist['description'],
-          original_url: playlist['external_urls']['spotify'],
           owner: {
             id: playlist['owner']['id'],
             name: playlist['owner']['display_name'],
@@ -52,13 +53,37 @@ module Music
     def get_playlist(playlist_id)
       res = @spotify_api.get "playlists/#{playlist_id}"
       body = JSON.parse(res.body)
-      body
+      image_url = body['images'].first['url'] if body['images'].first != nil
+
+      {
+        id: body['id'],
+        name: body['name'],
+        description: body['description'],
+        image_url: image_url,
+        owner: {
+          id: body['owner']['id'],
+          name: body['owner']['display_name']
+        }
+      }
     end
 
     def get_playlist_tracks(playlist_id)
       res = @spotify_api.get "playlists/#{playlist_id}/tracks"
       body = JSON.parse(res.body)
       body
+      body['items'].map { |item|
+        track = item['track']
+        {
+          id: track['uri'],
+          artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
+          album: {
+            name: track['album']['name'],
+            jacket_url: track['album']['images'].first['url'],
+          },
+          name: track['name'],
+          duration: (track['duration_ms'] / 1000).ceil,
+        }
+      }
     end
 
     def create_playlist(name)
@@ -73,11 +98,26 @@ module Music
     end
 
     def add_track_to_playlist(playlist_id, track_id)
-      raise NotImplementedError
+      data = {
+        uris: [
+          track_id
+        ]
+      }
+      res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
+      body = JSON.parse(res.body)
     end
 
     def remove_track_from_playlist(playlist_id, track_id)
-      raise NotImplementedError
+      data = {
+        tracks: [
+          {
+            uri: track_id
+          }
+        ]
+      }
+      puts data
+      res = @spotify_api.run_request :delete, "playlists/#{playlist_id}/tracks", JSON.generate(data), {}
+      body = JSON.parse(res.body)
     end
 
     class << self
