@@ -201,6 +201,27 @@ get "/room/:roomId/request" do
     end
 end
 
+# 音楽サービスとの連携
+get "/music/search" do
+
+    #Header情報取得
+    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
+
+    headers.each do |k, v|
+        puts "#{k} -> #{v}"
+    end
+
+
+
+    # tokenを複合化
+    JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
+
+    spotify_api = Music::SpotifyApi.new("access_token")
+
+    puts spotify_api
+end
+
+
 
 private
     # error
