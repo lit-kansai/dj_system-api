@@ -122,6 +122,37 @@ get "/room/:id" do
     data.to_json
 end
 
+# room個別情報更新
+put "/room/:roomId" do
+    room = Room.find(params[:roomId])
+    # status: 200 Success
+    if room
+        room.update(
+            url_name: params[:url_name],
+            room_name: params[:room_name],
+            description: params[:description],
+            users: params[:users],
+            created_at: params[:created_at],
+            updated_at: :params[updated_at]
+        )
+
+        # data = {
+        #     url_name: room.url_name,
+        #     room_name: room.room_name,
+        #     description: room.description,
+        #     users: room.users,
+        #     created_at: room.created_at,
+        #     updated_at: room.updated_at
+        # }
+
+    # status: 404 Not Found
+    else
+        status 404
+    end
+    
+    data.to_json
+end
+
 
 
 private
