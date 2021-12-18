@@ -100,6 +100,28 @@ get "/room/all" do
     data.to_json
 end
 
+# room個別情報表示
+get "/room/:id" do
+    room = Room.find(params[:roomId])
+    # code: 200 Success
+    if room
+        data = {
+            url_name: room.url_name,
+            room_name: room.room_name,
+            description: room.description,
+            users: room.users,
+            created_at: room.created_at,
+            updated_at: room.updated_at
+        }
+
+    # status: 404 Not Found
+    else
+        status 404
+    end
+    
+    data.to_json
+end
+
 
 
 private
