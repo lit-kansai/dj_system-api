@@ -268,7 +268,23 @@ end
 
 # Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
 post "/user/loggedInGoogle" do
-    
+
+end
+
+# ユーザー(管理者&MC)情報取得
+get "/user/:userId" do
+    user = User.find_by(userId: params[:userId])
+    if user
+        data = {
+            name: user.name,
+            avatar_url: user.avatar_url,
+            is_admin: user.is_admin
+        }
+
+        data.to_json
+    else
+        status 404
+    end
 end
 
 private
