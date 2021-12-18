@@ -309,6 +309,18 @@ get "/user/:userId" do
     end
 end
 
+# ユーザー(管理者&MC)情報削除
+get "/user/:userId" do
+    user = User.find_by(userId: params[:userId])
+    user.delete
+
+    if user.save
+        status 200
+    else
+        status 404
+    end
+end
+
 private
     # error
     def message_error
