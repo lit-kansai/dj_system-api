@@ -321,6 +321,11 @@ get "/user/:userId" do
     end
 end
 
+# Spotifyとの連携
+get "/user/link/spotify" do
+    
+end
+
 private
     # error
     def message_error
