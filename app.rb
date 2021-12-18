@@ -266,6 +266,11 @@ get "/user/login" do
 
 end
 
+# Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
+post "/user/loggedInGoogle" do
+    
+end
+
 private
     # error
     def message_error
