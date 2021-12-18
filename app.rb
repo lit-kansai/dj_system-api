@@ -60,7 +60,7 @@ post "/room" do
         data = {
             url: ""
         }
-
+        status 200
     # error
     else
         data = message_error
@@ -90,6 +90,7 @@ get "/room/all" do
                 }
                 data.push(room_data)
             end
+            status 200
         end
 
     # error
@@ -113,6 +114,7 @@ get "/room/:id" do
             created_at: room.created_at,
             updated_at: room.updated_at
         }
+        status 200
 
     # status: 404 Not Found
     else
@@ -145,6 +147,8 @@ put "/room/:roomId" do
         #     updated_at: room.updated_at
         # }
 
+        status 200
+
     # status: 404 Not Found
     else
         status 404
@@ -168,6 +172,7 @@ delete "/room/:roomId" do
         #     created_at: room.created_at,
         #     updated_at: room.updated_at
         # }
+        status 200
 
     # status: 404 Not Found
     else
@@ -194,6 +199,8 @@ get "/room/:roomId/request" do
         elsif
             data = message_error
         end
+
+        status 200
 
     # status: 404 Not Found
     else
@@ -282,6 +289,8 @@ get "/user/:userId" do
         }
 
         data.to_json
+
+        status 200
     else
         status 404
     end
@@ -304,6 +313,8 @@ get "/user/:userId" do
         }
 
         data.to_json
+
+        status 200
     else
         status 404
     end
@@ -323,7 +334,7 @@ end
 
 # Spotifyとの連携
 get "/user/link/spotify" do
-    
+
 end
 
 private
