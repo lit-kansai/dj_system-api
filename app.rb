@@ -296,7 +296,7 @@ get "/user/:userId" do
         is_admin: params[:is_admin]
     )
 
-    if user
+    if user.save
         data = {
             name: user.name,
             avatar_url: user.avatar_url,
