@@ -153,6 +153,30 @@ put "/room/:roomId" do
     data.to_json
 end
 
+# room個別削除
+delete "/room/:roomId" do
+    room = Room.find(params[:roomId])
+    # status: 200 Success
+    if room
+        room.destroy
+
+        # data = {
+        #     url_name: room.url_name,
+        #     room_name: room.room_name,
+        #     description: room.description,
+        #     users: room.users,
+        #     created_at: room.created_at,
+        #     updated_at: room.updated_at
+        # }
+
+    # status: 404 Not Found
+    else
+        status 404
+    end
+
+    data.to_json
+end
+
 
 
 private
