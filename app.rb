@@ -177,6 +177,29 @@ delete "/room/:roomId" do
     data.to_json
 end
 
+# リクエスト送信
+get "/room/:roomId/request" do
+    room = Room.find(prams[:roomId])
+    # status: 200 Success
+    if room
+        
+        # リクエスト処理
+        reqMusic = RequestMusic.create(
+            musics: params[:musics],
+            radio_name: params[:radio_name],
+            message: params[:message]
+        )
+
+        if reqMusic
+        elsif
+            data = message_error
+        end
+
+    # status: 404 Not Found
+    else
+        status 404
+    end
+end
 
 
 private
