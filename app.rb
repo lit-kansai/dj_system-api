@@ -69,6 +69,37 @@ post "/room" do
     data.to_json
 end
 
+# 全room情報取得(管理可能なroomのみ)
+get "/room/all" do
+    rooms = Room.all
+    data = []
+    if rooms
+        # code: 204 No Content
+        if rooms.empty
+            data = message_204
+        # code: 200 Success
+        else 
+            rooms.each do |room|
+                room_data = {
+                    url_name: room.url_name,
+                    room_name: room.room_name,
+                    description: room.description,
+                    users: room.users,
+                    created_at: room.created_at,
+                    updated_at: room.updated_at
+                }
+                data.push(room_data)
+            end
+        end
+
+    # error
+    else
+        data = message_error
+    end
+    
+    data.to_json
+end
+
 
 
 private
