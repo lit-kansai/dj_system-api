@@ -221,7 +221,50 @@ get "/music/search" do
     puts spotify_api
 end
 
+# ユーザー(管理者&MC)ログイン(新規作成も)
+get "/user/login" do
 
+    user = User.find_by(email: params[:email])
+    if user && user.authenticate(params[:password])
+        session[:user] = user.id
+        redirect "/#{user.id}/home"
+    else
+        erb :log_in
+    end
+    
+    # 秘密鍵生成
+    rsa_private = OpenSSL::PKey::RSA.generate(2048)
+
+    # 公開鍵生成
+    rsa_public = rsa_private.public_key
+
+    # 乱数生成
+    random = Random.new.rand
+
+    # 秘密鍵で渡し合う乱数
+    token_data = {
+        random_num: random
+    }
+
+    # token_data を暗号化 (秘密鍵でしかできない)
+    token = JWT.encode(token_data, rsa_private, 'RS256')
+
+    #Header情報取得
+    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
+
+    headers.each do |k, v|
+        puts "#{k} -> #{v}"
+    end
+
+    data = {
+        token: token,
+        random: random,
+        unlocked: JWT.decode(token, rsa_private, true, { algorithm: 'RS256' }),
+    }
+
+    data.to_json
+
+end
 
 private
     # error
