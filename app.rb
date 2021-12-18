@@ -287,6 +287,28 @@ get "/user/:userId" do
     end
 end
 
+# ユーザー(管理者&MC)情報更新
+get "/user/:userId" do
+    user = User.find_by(userId: params[:userId])
+    user.update(
+        name: params[:name],
+        avatar_url: params[:avatar_url],
+        is_admin: params[:is_admin]
+    )
+
+    if user
+        data = {
+            name: user.name,
+            avatar_url: user.avatar_url,
+            is_admin: user.is_admin
+        }
+
+        data.to_json
+    else
+        status 404
+    end
+end
+
 private
     # error
     def message_error
