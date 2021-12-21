@@ -2,6 +2,7 @@ ActiveRecord::Base.establish_connection
 class User < ActiveRecord::Base
     has_many :RoomUsers
     has_many :Rooms, through: :RoomUsers
+    has_many :Rooms
     has_many :AccessTokens
 end
 
@@ -18,6 +19,7 @@ class Room < ActiveRecord::Base
     has_many :RoomUsers
     has_many :Users, through: :RoomUsers
     has_many :Letters
+    belongs_to :User
 end
 
 class Letter < ActiveRecord::Base
