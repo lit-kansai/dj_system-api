@@ -103,7 +103,7 @@ end
 
 # room個別情報表示
 get "/room/:id" do
-    room = Room.find(params[:roomId])
+    room = Room.find_by(params[:roomId])
     # code: 200 Success
     if room
         data = {
@@ -126,7 +126,7 @@ end
 
 # room個別情報更新
 put "/room/:roomId" do
-    room = Room.find(params[:roomId])
+    room = Room.find_by(params[:roomId])
     # status: 200 Success
     if room
         room.update(
@@ -159,7 +159,7 @@ end
 
 # room個別削除
 delete "/room/:roomId" do
-    room = Room.find(params[:roomId])
+    room = Room.find_by(params[:roomId])
     # status: 200 Success
     if room
         room.destroy
@@ -184,7 +184,7 @@ end
 
 # リクエスト送信
 get "/room/:roomId/request" do
-    room = Room.find(prams[:roomId])
+    room = Room.find_by(prams[:roomId])
     # status: 200 Success
     if room
         
@@ -231,10 +231,10 @@ end
 # ユーザー(管理者&MC)ログイン(新規作成も)
 get "/user/login" do
 
+    # ログイン
     user = User.find_by(email: params[:email])
     if user && user.authenticate(params[:password])
         session[:user] = user.id
-        redirect "/#{user.id}/home"
     else
         erb :log_in
     end
@@ -255,6 +255,9 @@ get "/user/login" do
 
     # token_data を暗号化 (秘密鍵でしかできない)
     token = JWT.encode(token_data, rsa_private, 'RS256')
+
+    # tokenをheaderに追加
+    request.env['HTTP_TOKEN'] = token
 
     #Header情報取得
     headers = request.env.select { |k, v| k.start_with?('HTTP_') }
