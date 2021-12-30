@@ -10,49 +10,58 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_12_16_155420) do
+ActiveRecord::Schema.define(version: 2021_12_30_182601) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "AccessTokens", force: :cascade do |t|
+  create_table "access_tokens", force: :cascade do |t|
     t.integer "user_id"
     t.string "type"
     t.string "access_token"
     t.string "refresh_token"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "Letters", force: :cascade do |t|
-    t.string "room_id"
+  create_table "letters", force: :cascade do |t|
+    t.integer "room_id"
     t.string "radio_name"
     t.text "message"
-    t.datetime "create_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "RoomUsers", force: :cascade do |t|
+  create_table "room_users", force: :cascade do |t|
     t.integer "user_id"
     t.integer "room_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "Rooms", force: :cascade do |t|
+  create_table "rooms", force: :cascade do |t|
     t.integer "room_master_id"
     t.string "room_url"
     t.string "room_name"
     t.string "description"
     t.string "type"
-    t.string "playkist_id"
-    t.datetime "create_at"
+    t.string "playlist_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "Songs", force: :cascade do |t|
+  create_table "songs", force: :cascade do |t|
     t.integer "letter_id"
     t.string "song_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "users", force: :cascade do |t|
     t.boolean "is_admin"
     t.string "google_id"
-    t.datetime "create_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
 end

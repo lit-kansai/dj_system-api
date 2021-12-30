@@ -4,7 +4,7 @@ class CreateLetters < ActiveRecord::Migration[6.1]
       t.integer :room_id
       t.string :radio_name
       t.text :message
-      t.timestamps :created_at, null: false
+      t.timestamps null: false
     end
   end
 end

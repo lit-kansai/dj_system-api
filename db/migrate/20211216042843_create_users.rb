@@ -3,7 +3,7 @@ class CreateUsers < ActiveRecord::Migration[6.1]
     create_table :users do |t|
       t.boolean :is_admin
       t.string :google_id
-      t.timestamps :created_at ,null: false
+      t.timestamps null: false
     end
   end
 end
