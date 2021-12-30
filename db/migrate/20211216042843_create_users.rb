@@ -1,9 +1,9 @@
-class CreateUser < ActiveRecord::Migration[6.1]
+class CreateUsers < ActiveRecord::Migration[6.1]
   def change
     create_table :users do |t|
       t.boolean :is_admin
       t.string :google_id
-      t.datetime :create_at
+      t.timestamps :created_at ,null: false
     end
   end
 end

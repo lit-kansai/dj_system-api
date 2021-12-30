@@ -1,32 +1,32 @@
 ActiveRecord::Base.establish_connection
 class User < ActiveRecord::Base
-    has_many :RoomUsers
-    has_many :Rooms, through: :RoomUsers
-    has_many :Rooms
-    has_many :AccessTokens
+    has_many :room_users
+    has_many :rooms,through: :room_users
+    has_many :my_rooms,class_name:"rooms",foreign_key:"id"
+    has_many :access_tokens
 end
 
 class RoomUser < ActiveRecord::Base
-    belongs_to :User
-    belongs_to :Room
+    belongs_to :user
+    belongs_to :room
 end
 
 class AccessToken < ActiveRecord::Base
-    belongs_to :User
+    belongs_to :user
 end
 
 class Room < ActiveRecord::Base
-    has_many :RoomUsers
-    has_many :Users, through: :RoomUsers
-    has_many :Letters
-    belongs_to :User
+    has_many :room_users
+    has_many :users, through: :room_users
+    has_many :letters
+    belongs_to :user
 end
 
 class Letter < ActiveRecord::Base
-    belongs_to :Room
-    has_many :Songs
+    belongs_to :room
+    has_many :songs
 end
 
 class Song < ActiveRecord::Base
-    belongs_to :Letter
+    belongs_to :letter
 end
