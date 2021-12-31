@@ -1,4 +1,4 @@
-class Accesstokens < ActiveRecord::Migration[6.1]
+class CreateAccessTokens < ActiveRecord::Migration[6.1]
   def change
     create_table :access_tokens do |t|
       t.integer :user_id
