@@ -13,8 +13,18 @@ require "base64"
 
 Dotenv.load
 
-before do
+CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mentors.com", "http://localhost:3000", "http://127.0.0.1:3000"]
 
+options '*' do
+    response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, X-Requested-With"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+end
+  
+before do
+    response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
+    response.headers["Access-Control-Allow-Credentials"] = "true"
 end
  
 get '/' do
