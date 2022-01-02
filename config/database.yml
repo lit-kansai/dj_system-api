@@ -1,7 +1,7 @@
 default_env: &default
   adapter: postgresql
   encoding: unicode
-  database: c_original
+  database: dj_system-api
 
 development:
   <<: *default
