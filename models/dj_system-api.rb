@@ -1,8 +1,9 @@
 ActiveRecord::Base.establish_connection
+
 class User < ActiveRecord::Base
     has_many :room_users
-    has_many :rooms,through: :room_users
-    has_many :my_rooms,class_name:"rooms",foreign_key:"id"
+    has_many :rooms, through: :room_users
+    has_many :my_rooms, class_name: "Room", foreign_key: "id"
     has_many :access_tokens
 end
 
