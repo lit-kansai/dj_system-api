@@ -8,8 +8,6 @@ require "./models/dj_system-api.rb"
 
 require "net/http"
 
-require "jwt"
-
 Dotenv.load
 
 CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mentors.com", "http://localhost:3000", "http://127.0.0.1:3000"]
@@ -34,33 +32,9 @@ before do
         @google = Google.new(google_token.access_token) if google_token
     end
 end
- 
+
 get '/' do
-    "Hello World!"
-end
-
-get "/test" do
-    data = nil
-    if data
-        data = {
-            status: "OK"
-        }
-    else
-        data = message_404
-    end
-
-
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-    # tokenを複合化
-    # JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
-
-    data.to_json
+    "DJ GASSI API"
 end
 
 # roomの作成
@@ -88,25 +62,13 @@ end
 
 # room個別情報表示
 get "/room/:id" do
-    room = Room.find_by(params[:roomId])
-    # code: 200 Success
-    if room
-        data = {
-            url_name: room.url_name,
-            room_name: room.room_name,
-            description: room.description,
-            users: room.users,
-            created_at: room.created_at,
-            updated_at: room.updated_at
-        }
-        status 200
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
+    return unauthorized unless @user
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
-    
-    data.to_json
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
+
+    send_json room.as_json(include: [:users, :letters])
 end
 
 # room個別情報更新
@@ -325,6 +287,24 @@ private
             "status": 401
         }
         status 401
+        send_json data
+    end
+
+    def forbidden(message=nil)
+        data = {
+            "message": message || "Forbidden",
+            "status": 403
+        }
+        status 403
+        send_json data
+    end
+
+    def not_found(message=nil)
+        data = {
+            "message": message || "Not Found",
+            "status": 404
+        }
+        status 404
         send_json data
     end
 
