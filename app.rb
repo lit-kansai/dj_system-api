@@ -88,28 +88,20 @@ put "/room/:id" do
 end
 
 # room個別削除
-delete "/room/:roomId" do
-    room = Room.find_by(params[:roomId])
-    # status: 200 Success
-    if room
-        room.destroy
+delete "/room/:id" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
-        # data = {
-        #     url_name: room.url_name,
-        #     room_name: room.room_name,
-        #     description: room.description,
-        #     users: room.users,
-        #     created_at: room.created_at,
-        #     updated_at: room.updated_at
-        # }
-        status 200
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
+    room.destroy
 
-    data.to_json
+    data = {
+        code: "200",
+        ok: true
+    }
+    send_json data
 end
 
 # リクエスト送信
