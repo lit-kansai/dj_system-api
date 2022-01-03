@@ -2,23 +2,29 @@ require 'bundler/setup'
 Bundler.require
 require 'sinatra/reloader' if development?
 
+require 'sinatra/activerecord'
+require './models/dj_system-api.rb'
+
 require "./lib/music/music.rb"
 require "./lib/google.rb"
 
 require "net/http"
-
 require "jwt"
 require "openssl"
 require "base64"
 
+require "pry" if development?
+
 Dotenv.load
+
+enable :sessions
 
 before do
 
 end
  
 get '/' do
-    "Hello World!"
+    "<a href=\"#{Google.get_oauth_url(ENV['GOOGLE_REDIRECT_URL'])}\">Googleログイン</a>"
 end
 
 get "/test" do
@@ -228,16 +234,17 @@ get "/music/search" do
     puts spotify_api
 end
 
+get "/api/google/callback" do
+
+    access_token = Google.get_token_by_code(params['code'], 'test', ENV['GOOGLE_REDIRECT_URL'])
+    session[:token_data] = access_token
+    session[:google_token] = access_token['access_token']
+
+    redirect '/user/login'
+end
+
 # ユーザー(管理者&MC)ログイン(新規作成も)
 get "/user/login" do
-
-    # ログイン
-    user = User.find_by(email: params[:email])
-    if user && user.authenticate(params[:password])
-        session[:user] = user.id
-    else
-        erb :log_in
-    end
     
     # 秘密鍵生成
     rsa_private = OpenSSL::PKey::RSA.generate(2048)
@@ -254,10 +261,30 @@ get "/user/login" do
     }
 
     # token_data を暗号化 (秘密鍵でしかできない)
-    token = JWT.encode(token_data, rsa_private, 'RS256')
+    refresh_token = JWT.encode(token_data, rsa_private, 'RS256')
+
+    # ログイン
+    user = User.find_by(google_id: params[:google_id])
+    if user == nil
+        session[:user] = user.id
+    else
+        uer = User.create(
+            is_admin: params[:is_admin],
+            google_id: params[:google_id]
+        )
+
+        access_token = session[:token_data]
+
+        AccessToken.create(
+            user_id: user.id,
+            token_type: access_token['token_type'].to_s,
+            access_token: access_token['access_token'],
+            refresh_token: refresh_token
+        )
+    end
 
     # tokenをheaderに追加
-    request.env['HTTP_TOKEN'] = token
+    request.env['HTTP_TOKEN'] = refresh_token
 
     #Header情報取得
     headers = request.env.select { |k, v| k.start_with?('HTTP_') }
@@ -267,9 +294,9 @@ get "/user/login" do
     end
 
     data = {
-        token: token,
-        random: random,
-        unlocked: JWT.decode(token, rsa_private, true, { algorithm: 'RS256' }),
+        token: refresh_token,
+        random_number: random,
+        unlocked: JWT.decode(refresh_token, rsa_private, true, { algorithm: 'RS256' }),
     }
 
     data.to_json
