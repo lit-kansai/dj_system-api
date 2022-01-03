@@ -217,33 +217,19 @@ end
 
 get '/api/spotify/callback' do
     token = Music::SpotifyApi.get_token_by_code(params['code'], 'test', SPOTIFY_REDIRECT_URL)
-    
+    session[:api_token_data] = token
     session[:spotify_token] = token['access_token']
-    redirect '/menu/spotify'
+    redirect '/menu/search'
 end
 
 # 音楽サービスとの連携
 get "/music/search" do
+    api_token_data = session[:api_token_data]
 
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-
-
-    # tokenを複合化
-    JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
-
-    spotify_api = Music::SpotifyApi.new("access_token")
-
-    puts spotify_api
+    request['music_api'].search(params[:q]).to_json
 end
 
 get "/api/google/callback" do
-
     access_token = Google.get_token_by_code(params['code'], 'test', ENV['GOOGLE_REDIRECT_URL'])
     session[:access_token_data] = access_token
     session[:google_token] = access_token['access_token']
