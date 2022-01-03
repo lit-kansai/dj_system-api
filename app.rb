@@ -304,18 +304,17 @@ get "/user/login" do
 end
 
 # Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
-post "/user/loggedInGoogle" do
+# post "/user/loggedInGoogle" do
 
-end
+# end
 
 # ユーザー(管理者&MC)情報取得
 get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
+    user = User.find(id: params[:id])
     if user
         data = {
-            name: user.name,
-            avatar_url: user.avatar_url,
-            is_admin: user.is_admin
+            is_admin: user.is_admin,
+            google_id: user.google_id
         }
 
         data.to_json
@@ -328,17 +327,13 @@ end
 
 # ユーザー(管理者&MC)情報更新
 get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
+    user = User.find(id: params[:id])
     user.update(
-        name: params[:name],
-        avatar_url: params[:avatar_url],
         is_admin: params[:is_admin]
     )
 
     if user.save
         data = {
-            name: user.name,
-            avatar_url: user.avatar_url,
             is_admin: user.is_admin
         }
 
@@ -352,7 +347,7 @@ end
 
 # ユーザー(管理者&MC)情報削除
 get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
+    user = User.find(id: params[:id])
     user.delete
 
     if user.save
