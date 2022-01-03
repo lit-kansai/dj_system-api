@@ -3,7 +3,7 @@ ActiveRecord::Base.establish_connection
 class User < ActiveRecord::Base
     has_many :room_users
     has_many :rooms, through: :room_users
-    has_many :my_rooms, class_name: "Room", foreign_key: "id"
+    has_many :my_rooms, class_name: "Room", foreign_key: "room_master_id"
     has_many :access_tokens
 end
 
@@ -20,7 +20,7 @@ class Room < ActiveRecord::Base
     has_many :room_users
     has_many :users, through: :room_users
     has_many :letters
-    belongs_to :user
+    belongs_to :master, class_name: "User", foreign_key: "room_master_id"
 end
 
 class Letter < ActiveRecord::Base
