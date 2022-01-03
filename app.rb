@@ -68,9 +68,9 @@ post "/room" do
     return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
 
-    room = @user.rooms.build(
+    room = @user.my_rooms.build(
         users: [@user],
-        url_name: params[:url_name],
+        room_url: params[:url_name],
         room_name: params[:room_name],
         description: params[:description]
     )
@@ -81,34 +81,9 @@ end
 
 # 全room情報取得(管理可能なroomのみ)
 get "/room/all" do
-    rooms = Room.all
-    data = []
-    if rooms
-        # code: 204 No Content
-        if rooms.empty
-            data = message_204
-        # code: 200 Success
-        else 
-            rooms.each do |room|
-                room_data = {
-                    url_name: room.url_name,
-                    room_name: room.room_name,
-                    description: room.description,
-                    users: room.users,
-                    created_at: room.created_at,
-                    updated_at: room.updated_at
-                }
-                data.push(room_data)
-            end
-            status 200
-        end
-
-    # error
-    else
-        data = message_error
-    end
-    
-    data.to_json
+    return unauthorized unless @user
+    users = @user.rooms.as_json(include: [:users])
+    send_json users
 end
 
 # room個別情報表示
