@@ -21,10 +21,12 @@ enable :sessions
 
 before do
     request['google_api'] = Google.new(session[:google_token]) if session[:google_token]
+    request['music_api'] = Music::SpotifyApi.new(session[:spotify_token]) if session[:spotify_token]
 end
  
 get '/' do
     "<a href=\"#{Google.get_oauth_url(ENV['GOOGLE_REDIRECT_URL'])}\">Googleログイン</a>"
+    "<a href=\"#{Music::SpotifyApi.get_oauth_url(ENV['SPOTIFY_REDIRECT_URL'])}\">Spotifyログイン</a><br>"
 end
 
 get "/test" do
@@ -36,7 +38,6 @@ get "/test" do
     else
         data = message_404
     end
-
 
     #Header情報取得
     headers = request.env.select { |k, v| k.start_with?('HTTP_') }
@@ -214,6 +215,13 @@ get "/room/:roomId/request" do
     end
 end
 
+get '/api/spotify/callback' do
+    token = Music::SpotifyApi.get_token_by_code(params['code'], 'test', SPOTIFY_REDIRECT_URL)
+    
+    session[:spotify_token] = token['access_token']
+    redirect '/menu/spotify'
+end
+
 # 音楽サービスとの連携
 get "/music/search" do
 
@@ -237,7 +245,7 @@ end
 get "/api/google/callback" do
 
     access_token = Google.get_token_by_code(params['code'], 'test', ENV['GOOGLE_REDIRECT_URL'])
-    session[:token_data] = access_token
+    session[:access_token_data] = access_token
     session[:google_token] = access_token['access_token']
 
     redirect '/user/login'
@@ -276,7 +284,7 @@ get "/user/login" do
             google_id: user_info["id"]
         )
 
-        access_token = session[:token_data]
+        access_token = session[:access_token_data]
 
         AccessToken.create(
             user_id: user.id,

@@ -17,7 +17,6 @@ get '/' do
 end
 
 # Spotify
-
 get '/menu/spotify' do
   redirect '/' unless session[:spotify_token]
   '<a href="/api/spotify/search?q=しわあわせ">曲検索（しわあわせ）</a><br>
