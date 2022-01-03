@@ -62,8 +62,8 @@ end
 
 # room個別情報表示
 get "/room/:id" do
-    return bad_request("invalid parameters") unless has_params?(params, [:id])
     return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
     room = @user.rooms.find_by(id: params[:id])
     return not_found unless room
@@ -72,36 +72,19 @@ get "/room/:id" do
 end
 
 # room個別情報更新
-put "/room/:roomId" do
-    room = Room.find_by(params[:roomId])
-    # status: 200 Success
-    if room
-        room.update(
-            url_name: params[:url_name],
-            room_name: params[:room_name],
-            description: params[:description],
-            users: params[:users],
-            created_at: params[:created_at],
-            updated_at: :params[updated_at]
-        )
+put "/room/:id" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
-        # data = {
-        #     url_name: room.url_name,
-        #     room_name: room.room_name,
-        #     description: room.description,
-        #     users: room.users,
-        #     created_at: room.created_at,
-        #     updated_at: room.updated_at
-        # }
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-        status 200
+    room.room_url = params[:url_name] if params.has_key?(:url_name)
+    room.room_name = params[:room_name] if params.has_key?(:room_name)
+    room.description = params[:description] if params.has_key?(:description)
+    return bad_request("Failed to save") unless room.save
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
-    
-    data.to_json
+    send_json room.as_json(include: [:users])
 end
 
 # room個別削除
