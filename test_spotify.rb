@@ -72,7 +72,7 @@ get '/api/spotify/remove_track_from_playlist' do
 end
 
 get '/api/spotify/callback' do
-  token = Music::SpotifyApi.get_token_by_code(params['code'], 'test', SPOTIFY_REDIRECT_URL)
+  token = Music::SpotifyApi.get_token_by_code(params['code'], SPOTIFY_REDIRECT_URL)
   session[:spotify_token] = token['access_token']
   redirect '/menu/spotify'
 end

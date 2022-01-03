@@ -31,7 +31,7 @@ get '/api/google/profile' do
 end
 
 get '/api/google/callback' do
-  token = Google.get_token_by_code(params['code'], 'test', GOOGLE_REDIRECT_URL)
+  token = Google.get_token_by_code(params['code'], GOOGLE_REDIRECT_URL)
   session[:google_token] = token['access_token']
   puts token
   redirect '/menu/google'

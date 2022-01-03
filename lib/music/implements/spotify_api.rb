@@ -133,13 +133,9 @@ module Music
         'https://accounts.spotify.com/authorize?' + query.to_param
       end
 
-      def get_token_by_code(code, state,redirect_uri)
+      def get_token_by_code(code, redirect_uri)
         if code === nil || code === ""
           raise ArgumentError, "invalid code"
-        end
-
-        if state === nil || state === ""
-          raise ArgumentError, "invalid state"
         end
 
         params = {
