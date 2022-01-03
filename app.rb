@@ -4,12 +4,11 @@ require 'sinatra/reloader' if development?
 
 require "./lib/music/music.rb"
 require "./lib/google.rb"
+require "./models/dj_system-api.rb"
 
 require "net/http"
 
 require "jwt"
-require "openssl"
-require "base64"
 
 Dotenv.load
 
@@ -240,55 +239,28 @@ end
 
 # ユーザー(管理者&MC)ログイン(新規作成も)
 get "/user/login" do
+    return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
 
-    # ログイン
-    user = User.find_by(email: params[:email])
-    if user && user.authenticate(params[:password])
-        session[:user] = user.id
-    else
-        erb :log_in
-    end
-    
-    # 秘密鍵生成
-    rsa_private = OpenSSL::PKey::RSA.generate(2048)
-
-    # 公開鍵生成
-    rsa_public = rsa_private.public_key
-
-    # 乱数生成
-    random = Random.new.rand
-
-    # 秘密鍵で渡し合う乱数
-    token_data = {
-        random_num: random
-    }
-
-    # token_data を暗号化 (秘密鍵でしかできない)
-    token = JWT.encode(token_data, rsa_private, 'RS256')
-
-    # tokenをheaderに追加
-    request.env['HTTP_TOKEN'] = token
-
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-    data = {
-        token: token,
-        random: random,
-        unlocked: JWT.decode(token, rsa_private, true, { algorithm: 'RS256' }),
-    }
-
-    data.to_json
-
+    data = { redirect_url: Google.get_oauth_url(params['redirect_url']) }
+    send_json data
 end
 
 # Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
 post "/user/loggedInGoogle" do
+    return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
+    google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
+    return bad_request unless google_token['access_token']
+
+    google_id = Google.new(google_token['access_token']).profile['id']
+    return bad_request unless google_id
+
+    user = User.find_or_create_by(google_id: google_id)
+    user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
+    token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
+    
+    data = { api_token: token, user_id: user.id }
+    send_json data
 end
 
 # ユーザー(管理者&MC)情報取得
@@ -351,7 +323,44 @@ get "/user/link/spotify" do
 end
 
 private
+    def send_json(data)
+        content_type :json
+        data.to_json
+    end
+
+    def has_params?(params, keys)
+        keys.all? { |key| params.has_key?(key) && !params[key].empty? }
+    end
+
     # error
+
+    def bad_request(message=nil)
+        data = {
+            "message": message || "Bad Request",
+            "status": 400
+        }
+        status 400
+        send_json data
+    end
+
+    def unauthorized(message=nil)
+        data = {
+            "message": message || "Unauthorized",
+            "status": 401
+        }
+        status 401
+        send_json data
+    end
+
+    def internal_server_error(message=nil)
+        data = {
+            "message": message || "Internal Server Error",
+            "status": 500
+        }
+        status 500
+        send_json data
+    end
+
     def message_error
         data = {
             code: "---",
