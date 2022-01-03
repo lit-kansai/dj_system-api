@@ -20,7 +20,7 @@ Dotenv.load
 enable :sessions
 
 before do
-
+    request['google_api'] = Google.new(session[:google_token]) if session[:google_token]
 end
  
 get '/' do
@@ -264,13 +264,16 @@ get "/user/login" do
     refresh_token = JWT.encode(token_data, rsa_private, 'RS256')
 
     # ログイン
-    user = User.find_by(google_id: params[:google_id])
-    if user == nil
+    user_info = request['google_api'].profile
+
+    user = User.find_by(google_id: user_info["id"])
+
+    if user != nil
         session[:user] = user.id
     else
-        uer = User.create(
+        user = User.create(
             is_admin: params[:is_admin],
-            google_id: params[:google_id]
+            google_id: user_info["id"]
         )
 
         access_token = session[:token_data]
