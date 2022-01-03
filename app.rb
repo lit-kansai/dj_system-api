@@ -24,6 +24,15 @@ end
 before do
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
     response.headers["Access-Control-Allow-Credentials"] = "true"
+
+    if request.env["HTTP_API_TOKEN"]
+        decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
+        @user = User.find_by(id: decoded_token[0]['user_id'])
+        puts @user
+        return unless @user
+        google_token = @user.access_tokens.find_by(provider: 'google')
+        @google = Google.new(google_token.access_token) if google_token
+    end
 end
  
 get '/' do
@@ -56,26 +65,18 @@ end
 
 # roomの作成
 post "/room" do
-    #　Roomの作成
-    room = Room.new(
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+
+    room = @user.rooms.build(
+        users: [@user],
         url_name: params[:url_name],
         room_name: params[:room_name],
-        description: params[:description],
-        users: params[:users]
+        description: params[:description]
     )
+    return bad_request("Failed to save") unless room.save
 
-    # code:200 Success
-    if room.save
-        data = {
-            url: ""
-        }
-        status 200
-    # error
-    else
-        data = message_error
-    end
-
-    data.to_json
+    send_json room
 end
 
 # 全room情報取得(管理可能なroomのみ)
