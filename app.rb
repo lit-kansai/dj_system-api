@@ -48,7 +48,7 @@ post "/room" do
         room_name: params[:room_name],
         description: params[:description]
     )
-    return bad_request("Failed to save") unless room.save
+    return internal_server_error("Failed to save") unless room.save
 
     send_json room
 end
@@ -105,29 +105,30 @@ delete "/room/:id" do
 end
 
 # リクエスト送信
-get "/room/:roomId/request" do
-    room = Room.find_by(prams[:roomId])
-    # status: 200 Success
-    if room
-        
-        # リクエスト処理
-        reqMusic = RequestMusic.create(
-            musics: params[:musics],
-            radio_name: params[:radio_name],
-            message: params[:message]
-        )
+post "/room/:id/request" do
+    return bad_request("invalid parameters") unless has_params?(params, [:id, :musics, :radio_name, :message])
 
-        if reqMusic
-        elsif
-            data = message_error
-        end
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-        status 200
+    letter = room.letters.build(
+        radio_name: params[:radio_name],
+        message: params[:message],
+    )
 
-    # status: 404 Not Found
-    else
-        status 404
+    return internal_server_error("Failed to save") unless letter.save
+
+    musics.each do |music|
+        letter.songs.create(song_id: music)
     end
+
+    # 音楽API呼び出し
+
+    data = {
+        code: "200",
+        ok: true
+    }
+    send_json data
 end
 
 # 音楽サービスとの連携
