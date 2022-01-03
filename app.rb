@@ -4,12 +4,9 @@ require 'sinatra/reloader' if development?
 
 require "./lib/music/music.rb"
 require "./lib/google.rb"
+require "./models/dj_system-api.rb"
 
 require "net/http"
-
-require "jwt"
-require "openssl"
-require "base64"
 
 Dotenv.load
 
@@ -25,197 +22,113 @@ end
 before do
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
     response.headers["Access-Control-Allow-Credentials"] = "true"
+
+    if request.env["HTTP_API_TOKEN"]
+        decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
+        @user = User.find_by(id: decoded_token[0]['user_id'])
+        puts @user
+        return unless @user
+        google_token = @user.access_tokens.find_by(provider: 'google')
+        @google = Google.new(google_token.access_token) if google_token
+    end
 end
- 
+
 get '/' do
-    "Hello World!"
-end
-
-get "/test" do
-    data = nil
-    if data
-        data = {
-            status: "OK"
-        }
-    else
-        data = message_404
-    end
-
-
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-    # tokenを複合化
-    # JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
-
-    data.to_json
+    "DJ GASSI API"
 end
 
 # roomの作成
 post "/room" do
-    #　Roomの作成
-    room = Room.new(
-        url_name: params[:url_name],
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+
+    room = @user.my_rooms.build(
+        users: [@user],
+        room_url: params[:url_name],
         room_name: params[:room_name],
-        description: params[:description],
-        users: params[:users]
+        description: params[:description]
     )
+    return internal_server_error("Failed to save") unless room.save
 
-    # code:200 Success
-    if room.save
-        data = {
-            url: ""
-        }
-        status 200
-    # error
-    else
-        data = message_error
-    end
-
-    data.to_json
+    send_json room
 end
 
 # 全room情報取得(管理可能なroomのみ)
 get "/room/all" do
-    rooms = Room.all
-    data = []
-    if rooms
-        # code: 204 No Content
-        if rooms.empty
-            data = message_204
-        # code: 200 Success
-        else 
-            rooms.each do |room|
-                room_data = {
-                    url_name: room.url_name,
-                    room_name: room.room_name,
-                    description: room.description,
-                    users: room.users,
-                    created_at: room.created_at,
-                    updated_at: room.updated_at
-                }
-                data.push(room_data)
-            end
-            status 200
-        end
-
-    # error
-    else
-        data = message_error
-    end
-    
-    data.to_json
+    return unauthorized unless @user
+    users = @user.rooms.as_json(include: [:users])
+    send_json users
 end
 
 # room個別情報表示
 get "/room/:id" do
-    room = Room.find_by(params[:roomId])
-    # code: 200 Success
-    if room
-        data = {
-            url_name: room.url_name,
-            room_name: room.room_name,
-            description: room.description,
-            users: room.users,
-            created_at: room.created_at,
-            updated_at: room.updated_at
-        }
-        status 200
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
-    
-    data.to_json
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
+
+    send_json room.as_json(include: [:users, :letters])
 end
 
 # room個別情報更新
-put "/room/:roomId" do
-    room = Room.find_by(params[:roomId])
-    # status: 200 Success
-    if room
-        room.update(
-            url_name: params[:url_name],
-            room_name: params[:room_name],
-            description: params[:description],
-            users: params[:users],
-            created_at: params[:created_at],
-            updated_at: :params[updated_at]
-        )
+put "/room/:id" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
-        # data = {
-        #     url_name: room.url_name,
-        #     room_name: room.room_name,
-        #     description: room.description,
-        #     users: room.users,
-        #     created_at: room.created_at,
-        #     updated_at: room.updated_at
-        # }
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-        status 200
+    room.room_url = params[:url_name] if params.has_key?(:url_name)
+    room.room_name = params[:room_name] if params.has_key?(:room_name)
+    room.description = params[:description] if params.has_key?(:description)
+    return bad_request("Failed to save") unless room.save
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
-    
-    data.to_json
+    send_json room.as_json(include: [:users])
 end
 
 # room個別削除
-delete "/room/:roomId" do
-    room = Room.find_by(params[:roomId])
-    # status: 200 Success
-    if room
-        room.destroy
+delete "/room/:id" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
 
-        # data = {
-        #     url_name: room.url_name,
-        #     room_name: room.room_name,
-        #     description: room.description,
-        #     users: room.users,
-        #     created_at: room.created_at,
-        #     updated_at: room.updated_at
-        # }
-        status 200
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-    # status: 404 Not Found
-    else
-        status 404
-    end
+    room.destroy
 
-    data.to_json
+    data = {
+        code: "200",
+        ok: true
+    }
+    send_json data
 end
 
 # リクエスト送信
-get "/room/:roomId/request" do
-    room = Room.find_by(prams[:roomId])
-    # status: 200 Success
-    if room
-        
-        # リクエスト処理
-        reqMusic = RequestMusic.create(
-            musics: params[:musics],
-            radio_name: params[:radio_name],
-            message: params[:message]
-        )
+post "/room/:id/request" do
+    return bad_request("invalid parameters") unless has_params?(params, [:id, :musics, :radio_name, :message])
 
-        if reqMusic
-        elsif
-            data = message_error
-        end
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found unless room
 
-        status 200
+    letter = room.letters.build(
+        radio_name: params[:radio_name],
+        message: params[:message],
+    )
 
-    # status: 404 Not Found
-    else
-        status 404
+    return internal_server_error("Failed to save") unless letter.save
+
+    musics.each do |music|
+        letter.songs.create(song_id: music)
     end
+
+    # 音楽API呼び出し
+
+    data = {
+        code: "200",
+        ok: true
+    }
+    send_json data
 end
 
 # 音楽サービスとの連携
@@ -240,55 +153,28 @@ end
 
 # ユーザー(管理者&MC)ログイン(新規作成も)
 get "/user/login" do
+    return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
 
-    # ログイン
-    user = User.find_by(email: params[:email])
-    if user && user.authenticate(params[:password])
-        session[:user] = user.id
-    else
-        erb :log_in
-    end
-    
-    # 秘密鍵生成
-    rsa_private = OpenSSL::PKey::RSA.generate(2048)
-
-    # 公開鍵生成
-    rsa_public = rsa_private.public_key
-
-    # 乱数生成
-    random = Random.new.rand
-
-    # 秘密鍵で渡し合う乱数
-    token_data = {
-        random_num: random
-    }
-
-    # token_data を暗号化 (秘密鍵でしかできない)
-    token = JWT.encode(token_data, rsa_private, 'RS256')
-
-    # tokenをheaderに追加
-    request.env['HTTP_TOKEN'] = token
-
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-    data = {
-        token: token,
-        random: random,
-        unlocked: JWT.decode(token, rsa_private, true, { algorithm: 'RS256' }),
-    }
-
-    data.to_json
-
+    data = { redirect_url: Google.get_oauth_url(params['redirect_url']) }
+    send_json data
 end
 
 # Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
 post "/user/loggedInGoogle" do
+    return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
+    google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
+    return bad_request unless google_token['access_token']
+
+    google_id = Google.new(google_token['access_token']).profile['id']
+    return bad_request unless google_id
+
+    user = User.find_or_create_by(google_id: google_id)
+    user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
+    token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
+    
+    data = { api_token: token, user_id: user.id }
+    send_json data
 end
 
 # ユーザー(管理者&MC)情報取得
@@ -351,7 +237,62 @@ get "/user/link/spotify" do
 end
 
 private
+    def send_json(data)
+        content_type :json
+        data.to_json
+    end
+
+    def has_params?(params, keys)
+        keys.all? { |key| params.has_key?(key) && !params[key].empty? }
+    end
+
     # error
+
+    def bad_request(message=nil)
+        data = {
+            "message": message || "Bad Request",
+            "status": 400
+        }
+        status 400
+        send_json data
+    end
+
+    def unauthorized(message=nil)
+        data = {
+            "message": message || "Unauthorized",
+            "status": 401
+        }
+        status 401
+        send_json data
+    end
+
+    def forbidden(message=nil)
+        data = {
+            "message": message || "Forbidden",
+            "status": 403
+        }
+        status 403
+        send_json data
+    end
+
+    def not_found(message=nil)
+        data = {
+            "message": message || "Not Found",
+            "status": 404
+        }
+        status 404
+        send_json data
+    end
+
+    def internal_server_error(message=nil)
+        data = {
+            "message": message || "Internal Server Error",
+            "status": 500
+        }
+        status 500
+        send_json data
+    end
+
     def message_error
         data = {
             code: "---",

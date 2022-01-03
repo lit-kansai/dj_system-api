@@ -17,7 +17,7 @@ ActiveRecord::Schema.define(version: 2021_12_30_182601) do
 
   create_table "access_tokens", force: :cascade do |t|
     t.integer "user_id"
-    t.string "type"
+    t.string "provider"
     t.string "access_token"
     t.string "refresh_token"
     t.datetime "created_at", precision: 6, null: false
