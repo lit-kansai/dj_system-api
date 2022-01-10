@@ -3,7 +3,7 @@ ActiveRecord::Base.establish_connection
 class User < ActiveRecord::Base
     has_many :room_users, dependent: :destroy
     has_many :rooms, through: :room_users
-    has_many :my_rooms, class_name: "Room", foreign_key: "room_master_id"
+    has_many :my_rooms, class_name: "Room", foreign_key: "owner_user_id"
     has_many :access_tokens, dependent: :destroy
 end
 
@@ -20,12 +20,12 @@ class Room < ActiveRecord::Base
     has_many :room_users, dependent: :destroy
     has_many :users, through: :room_users
     has_many :letters, dependent: :destroy
-    belongs_to :master, class_name: "User", foreign_key: "room_master_id"
+    belongs_to :master, class_name: "User", foreign_key: "owner_user_id"
 end
 
 class Letter < ActiveRecord::Base
     belongs_to :room
-    has_many :songs, dependent: :destroy
+    has_many :music, dependent: :destroy
 end
 
 class Song < ActiveRecord::Base
