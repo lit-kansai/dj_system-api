@@ -28,6 +28,6 @@ class Letter < ActiveRecord::Base
     has_many :music, dependent: :destroy
 end
 
-class Song < ActiveRecord::Base
+class Music < ActiveRecord::Base
     belongs_to :letter
 end
