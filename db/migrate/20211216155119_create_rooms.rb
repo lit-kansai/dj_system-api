@@ -1,9 +1,9 @@
 class CreateRooms < ActiveRecord::Migration[6.1]
   def change
       create_table :rooms do |t|
-        t.integer :room_master_id
-        t.string :room_url
-        t.string :room_name
+        t.integer :owner_user_id
+        t.string :display_id
+        t.string :name
         t.string :description
         t.string :type
         t.string :playlist_id
