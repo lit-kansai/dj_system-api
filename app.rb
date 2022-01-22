@@ -40,12 +40,12 @@ end
 # roomの作成
 post "/room" do
     return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :name, :description])
 
     room = @user.my_rooms.build(
         users: [@user],
-        room_url: params[:url_name],
-        room_name: params[:room_name],
+        display_id: params[:url_name],
+        name: params[:name],
         description: params[:description]
     )
     return internal_server_error("Failed to save") unless room.save
@@ -62,7 +62,6 @@ end
 
 # room個別情報表示
 get "/room/:id" do
-    return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:id])
 
     room = @user.rooms.find_by(id: params[:id])
@@ -79,8 +78,8 @@ put "/room/:id" do
     room = @user.rooms.find_by(id: params[:id])
     return not_found unless room
 
-    room.room_url = params[:url_name] if params.has_key?(:url_name)
-    room.room_name = params[:room_name] if params.has_key?(:room_name)
+    room.display_id = params[:url_name] if params.has_key?(:url_name)
+    room.name = params[:name] if params.has_key?(:name)
     room.description = params[:description] if params.has_key?(:description)
     return bad_request("Failed to save") unless room.save
 
@@ -119,7 +118,7 @@ post "/room/:id/request" do
     return internal_server_error("Failed to save") unless letter.save
 
     musics.each do |music|
-        letter.songs.create(song_id: music)
+        letter.music.create(provided_music_id: music)
     end
 
     # 音楽API呼び出し
