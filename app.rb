@@ -18,7 +18,7 @@ options '*' do
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, X-Requested-With"
     response.headers["Access-Control-Allow-Credentials"] = "true"
 end
-  
+
 before do
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
     response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -40,12 +40,12 @@ end
 # roomの作成
 post "/room" do
     return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :name, :description])
+    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
 
     room = @user.my_rooms.build(
         users: [@user],
         display_id: params[:url_name],
-        name: params[:name],
+        name: params[:room_name],
         description: params[:description]
     )
     return internal_server_error("Failed to save") unless room.save
@@ -79,7 +79,7 @@ put "/room/:id" do
     return not_found unless room
 
     room.display_id = params[:url_name] if params.has_key?(:url_name)
-    room.name = params[:name] if params.has_key?(:name)
+    room.name = params[:room_name] if params.has_key?(:room_name)
     room.description = params[:description] if params.has_key?(:description)
     return bad_request("Failed to save") unless room.save
 
