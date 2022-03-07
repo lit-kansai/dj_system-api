@@ -1,6 +1,6 @@
 require 'base64'
 
-module Music
+module MusicApi
   class SpotifyApi < ApiInterface
     API_ENDPOINT = 'https://api.spotify.com/v1/'
 
