@@ -145,7 +145,7 @@ get "/music/search" do
     # tokenを複合化
     JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
 
-    spotify_api = Music::SpotifyApi.new("access_token")
+    spotify_api = MusicApi::SpotifyApi.new("access_token")
 
     puts spotify_api
 end
