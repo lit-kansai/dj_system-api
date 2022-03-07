@@ -25,7 +25,7 @@ end
 
 class Letter < ActiveRecord::Base
     belongs_to :room
-    has_many :music, dependent: :destroy
+    has_many :musics, dependent: :destroy
 end
 
 class Music < ActiveRecord::Base
