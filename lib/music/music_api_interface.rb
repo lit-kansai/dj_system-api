@@ -1,4 +1,4 @@
-module Music
+module MusicApi
   class ApiInterface
     attr_accessor :access_token
 
