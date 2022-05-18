@@ -241,18 +241,15 @@ get "/user/link/spotify" do
 end
 
 post "/user/loggedInSpotify" do
+    return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
     spotify_token = Music::SpotifyApi.get_token_by_code(params['code'], params['redirect_url'])
     return bad_request unless spotify_token['access_token']
 
-    google_id = Google.new(google_token['access_token']).profile['id']
-    return bad_request unless google_id
-
-    user = User.find_or_create_by(google_id: google_id)
-    user.access_tokens.find_or_create_by(provider: 'spotify').update(access_token: spotify_token['access_token'], refresh_token: spotify_token['refresh_token'])
+    @user.access_tokens.find_or_create_by(provider: 'spotify').update(access_token: spotify_token['access_token'], refresh_token: spotify_token['refresh_token'])
     token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
-    
+
     data = { api_token: token, user_id: user.id }
     send_json data
 end
