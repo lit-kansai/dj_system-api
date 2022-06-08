@@ -74,6 +74,8 @@ GEM
     pg (1.2.3)
     public_suffix (3.1.1)
     rack (2.2.3)
+    rack-contrib (2.3.0)
+      rack (~> 2.0)
     rack-protection (2.1.0)
       rack
     rake (13.0.6)
@@ -122,6 +124,7 @@ DEPENDENCIES
   faraday (~> 1.8)
   oauth2 (~> 1.4)
   pg (~> 1.2)
+  rack-contrib (~> 2.0)
   rake (~> 13.0)
   rspotify (~> 2.11)
   sinatra (~> 2.1)

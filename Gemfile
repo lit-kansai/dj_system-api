@@ -16,3 +16,4 @@ gem "rspotify", "~> 2.11"
 gem "oauth2", "~> 1.4"
 
 gem "faraday", "~> 1.8"
+gem 'rack-contrib', '~> 2.0'
