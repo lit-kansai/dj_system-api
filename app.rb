@@ -16,7 +16,7 @@ CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mento
 options '*' do
     response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, X-Requested-With"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, X-Requested-With, api-token"
     response.headers["Access-Control-Allow-Credentials"] = "true"
 end
 
