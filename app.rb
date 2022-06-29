@@ -164,10 +164,12 @@ post "/user/loggedInGoogle" do
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
     google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
-    return bad_request unless google_token['access_token']
+    return internal_server_error("failed to get token") unless google_token['access_token']
 
     google_id = Google.new(google_token['access_token']).profile['id']
-    return bad_request unless google_id
+    return internal_server_error("failed to get id") unless google_id
+
+    p "test"
 
     user = User.find_or_create_by(google_id: google_id)
     user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
