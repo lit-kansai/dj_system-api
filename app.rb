@@ -25,12 +25,15 @@ before do
     response.headers["Access-Control-Allow-Credentials"] = "true"
 
     if request.env["HTTP_API_TOKEN"]
-        decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
-        @user = User.find_by(id: decoded_token[0]['user_id'])
-        puts @user
-        return unless @user
-        google_token = @user.access_tokens.find_by(provider: 'google')
-        @google = Google.new(google_token.access_token) if google_token
+        begin
+            decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
+            @user = User.find_by(id: decoded_token[0]['user_id'])
+            return unless @user
+            google_token = @user.access_tokens.find_by(provider: 'google')
+            @google = Google.new(google_token.access_token) if google_token
+        rescue => e # 例外オブジェクトを代入した変数。
+            session.clear
+        end
     end
 end
 
@@ -164,12 +167,10 @@ post "/user/loggedInGoogle" do
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
     google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
-    return internal_server_error("failed to get token") unless google_token['access_token']
+    return bad_request unless google_token['access_token']
 
     google_id = Google.new(google_token['access_token']).profile['id']
-    return internal_server_error("failed to get id") unless google_id
-
-    p "test"
+    return bad_request unless google_id
 
     user = User.find_or_create_by(google_id: google_id)
     user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
