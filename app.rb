@@ -134,6 +134,17 @@ post "/room/:id/request" do
     send_json data
 end
 
+#ルーム内のお便りを取得する
+get '/room/:roomId/letters' do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
+
+    room = @user.rooms.find_by(id: params[:id])
+    letters = roome.letters
+
+    send_json letters
+end
+
 # 音楽サービスとの連携
 get "/music/search" do
 
