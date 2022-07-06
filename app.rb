@@ -131,6 +131,16 @@ post "/room/:id/request" do
     send_json data
 end
 
+#ルーム内の楽曲取得
+get "/room/:id/musics" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id])
+
+    musics = MusicApi::SpotifyApi.get_playlists()
+
+    send_json musics
+end
+
 # 音楽サービスとの連携
 get "/music/search" do
 
@@ -140,8 +150,6 @@ get "/music/search" do
     headers.each do |k, v|
         puts "#{k} -> #{v}"
     end
-
-
 
     # tokenを複合化
     JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
