@@ -5,7 +5,8 @@ module MusicApi
     API_ENDPOINT = 'https://api.spotify.com/v1/'
 
     SCOPES = ['playlist-read-private', 'playlist-read-collaborative', 'playlist-modify-public', 'playlist-modify-private']
-
+    @@client_access_token=nil
+    
     def initialize(access_token)
       @access_token = access_token
 
@@ -152,6 +153,34 @@ module MusicApi
         end
 
         return JSON.parse(res.body)
+      end
+      
+      def get_access_token()
+        res = Faraday.new.post do |req|
+          req.headers["Authorization"] = 'Basic ' + Base64.strict_encode64(ENV['SPOTIFY_API_CLIENT_ID'] + ':' + ENV['SPOTIFY_API_CLIENT_SECRET'])
+          req.headers["Content-Type"] = "application/x-www-form-urlencoded"
+          req.url 'https://accounts.spotify.com/api/token'
+          req.body = {:grant_type => :client_credentials}
+        end
+        body = JSON.parse(res.body)
+        @@client_access_token=body["access_token"]
+      end
+
+      def search(search_keyword)
+
+        if @@client_access_token.nil?||@@client_access_token===""
+          get_access_token()
+        end
+        http1=Faraday.new(url: API_ENDPOINT)
+        res = http1.get  do |req|
+          req.params[:q] = search_keyword
+          req.params[:type] = 'track'
+          req.url 'search'
+          req.headers['Content-Type'] = "application/json"
+          req.headers['Authorization'] = "Bearer #{@@client_access_token}"
+        end
+        return JSON.parse(res.body)
+
       end
     end
   end
