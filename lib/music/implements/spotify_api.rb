@@ -7,23 +7,32 @@ module MusicApi
     SCOPES = ['playlist-read-private', 'playlist-read-collaborative', 'playlist-modify-public', 'playlist-modify-private']
     @@client_access_token=nil
     
-    def initialize(access_token)
+    def initialize(access_token, refresh_token)
       @access_token = access_token
+      @refresh_token = refresh_token
 
       @spotify_api = Faraday.new(:url => API_ENDPOINT)
       @spotify_api.headers['Authorization'] = "Bearer #{access_token}"
       @spotify_api.headers['Content-Type'] = 'application/json'
+      @spotify_api.headers['Accept-Language'] = 'ja'
     end
 
     def me()
       res = @spotify_api.get 'me'
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get 'me'
+      end
       JSON.parse(res.body)
     end
 
     def search(query)
       res = @spotify_api.get 'search', { q: query, type: 'track' }
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get 'search', { q: query, type: 'track' }
+      end
       body = JSON.parse(res.body)
-      puts body
       body['tracks']['items'].map { |track|
         {
           id: track['uri'],
@@ -41,6 +50,10 @@ module MusicApi
     def get_playlists()
       @id = self.me()['id'] unless @id
       res = @spotify_api.get 'me/playlists'
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get 'me/playlists'
+      end
       body = JSON.parse(res.body)
       body['items'].select { |playlist|
         playlist['owner']['id'] == @id
@@ -58,6 +71,10 @@ module MusicApi
 
     def get_playlist(playlist_id)
       res = @spotify_api.get "playlists/#{playlist_id}"
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get "playlists/#{playlist_id}"
+      end
       body = JSON.parse(res.body)
       image_url = body['images'].first['url'] if body['images'].first != nil
       {
@@ -67,21 +84,24 @@ module MusicApi
         image_url: image_url,
         provider: 'spotify'
       }
+      body
     end
 
     def get_playlist_tracks(playlist_id)
       res = @spotify_api.get "playlists/#{playlist_id}/tracks"
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get "playlists/#{playlist_id}/tracks"
+      end
       body = JSON.parse(res.body)
-      body
+      return nil if res.status != 200
       body['items'].map { |item|
         track = item['track']
         {
           id: track['uri'],
-          artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
-          album: {
-            name: track['album']['name'],
-            jacket_url: track['album']['images'].first['url'],
-          },
+          artists: track['artists'].map { |artist| artist['name'] }.join,
+          album: track['album']['name'],
+          thumbnail: track['album']['images'].first['url'],
           name: track['name'],
           duration: (track['duration_ms'] / 1000).ceil,
         }
@@ -96,6 +116,10 @@ module MusicApi
         public: false
       }
       res = @spotify_api.post "users/#{profile['id']}/playlists", JSON.generate(data)
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.post "users/#{profile['id']}/playlists", JSON.generate(data)
+      end
       body = JSON.parse(res.body)
     end
 
@@ -106,6 +130,10 @@ module MusicApi
         ]
       }
       res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
+      end
       body = JSON.parse(res.body)
     end
 
@@ -117,9 +145,30 @@ module MusicApi
           }
         ]
       }
-      puts data
       res = @spotify_api.run_request :delete, "playlists/#{playlist_id}/tracks", JSON.generate(data), {}
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.run_request :delete, "playlists/#{playlist_id}/tracks", JSON.generate(data), {}
+      end
       body = JSON.parse(res.body)
+    end
+
+    def refresh_access_token()
+      params = {
+        grant_type: "refresh_token",
+        refresh_token: @refresh_token
+      }
+
+      res = Faraday.new.post do |req|
+        req.headers["Authorization"] = 'Basic ' + Base64.strict_encode64(ENV['SPOTIFY_API_CLIENT_ID'] + ':' + ENV['SPOTIFY_API_CLIENT_SECRET'])
+        req.headers["Content-Type"] = "application/x-www-form-urlencoded"
+        req.url 'https://accounts.spotify.com/api/token'
+        req.body = params.to_query
+      end
+      
+      body = JSON.parse(res.body)
+      @access_token = body['access_token']
+      @spotify_api.headers['Authorization'] = "Bearer #{@access_token}"
     end
 
     class << self
@@ -164,7 +213,7 @@ module MusicApi
           req.body = {:grant_type => :client_credentials}
         end
         body = JSON.parse(res.body)
-        @@client_access_token=body["access_token"]
+        @@client_access_token = body["access_token"]
       end
 
       def search(search_keyword)
