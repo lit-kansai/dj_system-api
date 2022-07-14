@@ -38,7 +38,7 @@ before do
                 when 'google'
                     @google = Google.new(token.access_token)
                 when 'spotify'
-                    @spotify = Spotify.new(token.access_token)
+                    @spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
                 end
             end
         rescue => e # 例外オブジェクトを代入した変数。
@@ -265,6 +265,57 @@ post "/user/loggedInSpotify" do
 
     data = { ok: true }
     send_json data
+end
+
+get "/user/playlists" do
+    return unauthorized unless @user
+    list = []
+    @user.access_tokens.each do |access_token|
+        case access_token.provider
+        when 'spotify'
+            return forbidden("provider is not linked") unless @spotify
+            list.concat(@spotify.get_playlists)
+        end
+    end
+    send_json list
+end
+
+get "/user/playlists/:provier" do
+    return unauthorized unless @user
+    case params[:provier]
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        return send_json @spotify.get_playlists
+    else
+        return bad_request("unsupported provider")
+    end
+end
+
+get "/user/playlist/:provier/:playlist_id" do
+    return unauthorized unless @user
+    case params[:provier]
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.get_playlist_tracks(params[:playlist_id])
+        return not_found_error("playlist not found") unless res
+        return send_json res
+    else
+        return bad_request("unsupported provider")
+    end
+end
+
+post "/user/playlist/:provier" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:name])
+    case params[:provier]
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.create_playlist(params[:name])
+        data = { ok: true }
+        return send_json data
+    else
+        return bad_request("unsupported provider")
+    end
 end
 
 private
