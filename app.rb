@@ -34,7 +34,6 @@ before do
             @user = User.find_by(id: decoded_token[0]['user_id'])
             return unless @user
             @user.access_tokens.each do |token|
-                puts token.provider
                 case token.provider
                 when 'google'
                     @google = Google.new(token.access_token)
