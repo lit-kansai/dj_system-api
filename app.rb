@@ -304,6 +304,20 @@ get "/user/playlist/:provier/:playlist_id" do
     end
 end
 
+post "/user/playlist/:provier" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:name])
+    case params[:provier]
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.create_playlist(params[:name])
+        data = { ok: true }
+        return send_json data
+    else
+        return bad_request("unsupported provider")
+    end
+end
+
 private
     def send_json(data)
         content_type :json
