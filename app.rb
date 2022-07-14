@@ -33,8 +33,15 @@ before do
             decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
             @user = User.find_by(id: decoded_token[0]['user_id'])
             return unless @user
-            google_token = @user.access_tokens.find_by(provider: 'google')
-            @google = Google.new(google_token.access_token) if google_token
+            @user.access_tokens.each do |token|
+                puts token.provider
+                case token.provider
+                when 'google'
+                    @google = Google.new(token.access_token)
+                when 'spotify'
+                    @spotify = Spotify.new(token.access_token)
+                end
+            end
         rescue => e # 例外オブジェクトを代入した変数。
             session.clear
         end
@@ -73,7 +80,7 @@ get "/room/:id" do
     return bad_request("invalid parameters") unless has_params?(params, [:id])
 
     room = @user.rooms.find_by(id: params[:id])
-    return not_found unless room
+    return not_found_error if room.nil?
 
     send_json room.as_json(include: [:users, :letters])
 end
@@ -84,7 +91,7 @@ put "/room/:id" do
     return bad_request("invalid parameters") unless has_params?(params, [:id])
 
     room = @user.rooms.find_by(id: params[:id])
-    return not_found unless room
+    return not_found_error unless room
 
     room.display_id = params[:url_name] if params.has_key?(:url_name)
     room.name = params[:room_name] if params.has_key?(:room_name)
@@ -100,7 +107,7 @@ delete "/room/:id" do
     return bad_request("invalid parameters") unless has_params?(params, [:id])
 
     room = @user.rooms.find_by(id: params[:id])
-    return not_found unless room
+    return not_found_error unless room
 
     room.destroy
 
@@ -116,7 +123,7 @@ post "/room/:id/request" do
     return bad_request("invalid parameters") unless has_params?(params, [:id, :musics, :radio_name, :message])
 
     room = @user.rooms.find_by(id: params[:id])
-    return not_found unless room
+    return not_found_error unless room
 
     letter = room.letters.build(
         radio_name: params[:radio_name],
@@ -243,7 +250,7 @@ get "/user/link/spotify" do
 
     return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
 
-    data = { redirect_url: Music::SpotifyApi.get_oauth_url(params['redirect_url']) }
+    data = { redirect_url: MusicApi::SpotifyApi.get_oauth_url(params['redirect_url']) }
     send_json data
 
 end
@@ -252,13 +259,12 @@ post "/user/loggedInSpotify" do
     return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
-    spotify_token = Music::SpotifyApi.get_token_by_code(params['code'], params['redirect_url'])
-    return bad_request unless spotify_token['access_token']
+    spotify_token = MusicApi::SpotifyApi.get_token_by_code(params['code'], params['redirect_url'])
+    return internal_server_error("failed to get token") unless spotify_token['access_token']
 
     @user.access_tokens.find_or_create_by(provider: 'spotify').update(access_token: spotify_token['access_token'], refresh_token: spotify_token['refresh_token'])
-    token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
 
-    data = { api_token: token, user_id: user.id }
+    data = { ok: true }
     send_json data
 end
 
@@ -301,7 +307,7 @@ private
         send_json data
     end
 
-    def not_found(message=nil)
+    def not_found_error(message=nil)
         data = {
             "message": message || "Not Found",
             "status": 404
