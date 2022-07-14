@@ -38,7 +38,7 @@ before do
                 when 'google'
                     @google = Google.new(token.access_token)
                 when 'spotify'
-                    @spotify = Spotify.new(token.access_token)
+                    @spotify = MusicApi::SpotifyApi.new(token.access_token)
                 end
             end
         rescue => e # 例外オブジェクトを代入した変数。
@@ -265,6 +265,30 @@ post "/user/loggedInSpotify" do
 
     data = { ok: true }
     send_json data
+end
+
+get "/user/playlists/all" do
+    return unauthorized unless @user
+    list = []
+    @user.access_tokens.each do |access_token|
+        case access_token.provider
+        when 'spotify'
+            return forbidden("provider is not linked") unless @spotify
+            list.concat(@spotify.get_playlists)
+        end
+    end
+    send_json list
+end
+
+get "/user/playlists/:provier" do
+    return unauthorized unless @user
+    case params[:provier]
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        return send_json @spotify.get_playlists
+    else
+        return bad_request("unsupported provider")
+    end
 end
 
 private

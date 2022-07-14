@@ -15,6 +15,11 @@ module MusicApi
       @spotify_api.headers['Content-Type'] = 'application/json'
     end
 
+    def me()
+      res = @spotify_api.get 'me'
+      JSON.parse(res.body)
+    end
+
     def search(query)
       res = @spotify_api.get 'search', { q: query, type: 'track' }
       body = JSON.parse(res.body)
@@ -34,19 +39,19 @@ module MusicApi
     end
 
     def get_playlists()
+      @id = self.me()['id'] unless @id
       res = @spotify_api.get 'me/playlists'
       body = JSON.parse(res.body)
-      body['items'].map { |playlist|
+      body['items'].select { |playlist|
+        playlist['owner']['id'] == @id
+      }.map { |playlist|
         image_url = playlist['images'].first['url'] if playlist['images'].first != nil
         {
           id: playlist['id'],
           name: playlist['name'],
           image_url: image_url,
           description: playlist['description'],
-          owner: {
-            id: playlist['owner']['id'],
-            name: playlist['owner']['display_name'],
-          }
+          provider: 'spotify'
         }
       }
     end
@@ -55,16 +60,12 @@ module MusicApi
       res = @spotify_api.get "playlists/#{playlist_id}"
       body = JSON.parse(res.body)
       image_url = body['images'].first['url'] if body['images'].first != nil
-
       {
         id: body['id'],
         name: body['name'],
         description: body['description'],
         image_url: image_url,
-        owner: {
-          id: body['owner']['id'],
-          name: body['owner']['display_name']
-        }
+        provider: 'spotify'
       }
     end
 
