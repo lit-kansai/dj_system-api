@@ -82,4 +82,14 @@ class McRoomRouter < Base
     @env["room"].destroy
     send_json(ok: true)
   end
+
+  # room内お便り取得
+  get "/:room_id/letters" do
+    
+  end
+
+  # room内楽曲取得
+  get "/:room_id/musics" do
+    
+  end
 end
