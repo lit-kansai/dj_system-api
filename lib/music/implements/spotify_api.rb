@@ -23,6 +23,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.get 'me'
       end
+      return nil unless res.status >= 200 && res.status < 300
       JSON.parse(res.body)
     end
 
@@ -32,6 +33,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.get 'search', { q: query, type: 'track' }
       end
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
       body['tracks']['items'].map { |track|
         {
@@ -54,6 +56,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.get 'me/playlists'
       end
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
       body['items'].select { |playlist|
         playlist['owner']['id'] == @id
@@ -75,7 +78,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.get "playlists/#{playlist_id}"
       end
-      return nil if res.status != 200
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
       image_url = body['images'].first['url'] if body['images'].first != nil
       {
@@ -95,7 +98,7 @@ module MusicApi
         res = @spotify_api.get "playlists/#{playlist_id}/tracks"
       end
       body = JSON.parse(res.body)
-      return nil if res.status != 200
+      return nil unless res.status >= 200 && res.status < 300
       body['items'].map { |item|
         track = item['track']
         {
@@ -121,6 +124,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.post "users/#{id}/playlists", JSON.generate(data)
       end
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
     end
 
@@ -135,6 +139,8 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
       end
+      puts res.status
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
     end
 
@@ -151,6 +157,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.run_request :delete, "playlists/#{playlist_id}/tracks", JSON.generate(data), {}
       end
+      return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
     end
 

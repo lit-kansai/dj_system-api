@@ -169,6 +169,65 @@ post "/room/:id/request" do
     send_json data
 end
 
+get "/room/:id/playlist" do
+    return unauthorized unless @user
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found_error unless room
+
+    case room.provider
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.get_playlist_tracks(room.playlist_id)
+        return not_found_error("playlist not found") unless res
+        return send_json res
+    else
+        return not_found_error("playlist not found")
+    end
+end
+
+post "/room/:id/playlist/music" do
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(params, [:id, :music_id])
+
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found_error unless room
+
+    case room.provider
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.add_track_to_playlist(room.playlist_id, params[:music_id])
+        return not_found_error unless res
+        data = {
+            ok: true
+        }
+        return send_json data
+    else
+        return not_found_error("playlist not found")
+    end
+end
+
+delete "/room/:id/playlist/music" do
+    body = JSON.parse(request.body.read)
+    return unauthorized unless @user
+    return bad_request("invalid parameters") unless has_params?(body, ["music_id"])
+
+    room = @user.rooms.find_by(id: params[:id])
+    return not_found_error unless room
+
+    case room.provider
+    when 'spotify'
+        return forbidden("provider is not linked") unless @spotify
+        res = @spotify.remove_track_from_playlist(room.playlist_id, body["music_id"])
+        return not_found_error unless res
+        data = {
+            ok: true
+        }
+        return send_json data
+    else
+        return not_found_error("playlist not found")
+    end
+end
+
 # 音楽サービスとの連携
 get "/music/search" do
 
