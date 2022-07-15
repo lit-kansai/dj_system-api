@@ -75,6 +75,7 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.get "playlists/#{playlist_id}"
       end
+      return nil if res.status != 200
       body = JSON.parse(res.body)
       image_url = body['images'].first['url'] if body['images'].first != nil
       {
