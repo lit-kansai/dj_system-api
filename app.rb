@@ -74,7 +74,7 @@ post "/room" do
         when 'spotify'
             return forbidden("provider is not linked") unless @spotify
             provider = params[:provider]
-            res = @spotify.create_playlist(params[:room_name])
+            res = @spotify.create_playlist(params[:room_name], params[:description])
             playlist_id = res['id']
         end
     end
@@ -320,7 +320,7 @@ post "/user/playlist/:provier" do
     case params[:provier]
     when 'spotify'
         return forbidden("provider is not linked") unless @spotify
-        res = @spotify.create_playlist(params[:name])
+        res = @spotify.create_playlist(params[:name], params[:description])
         data = { ok: true, id: res['id'] }
         return send_json data
     else
