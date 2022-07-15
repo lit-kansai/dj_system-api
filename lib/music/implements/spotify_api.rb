@@ -154,7 +154,6 @@ module MusicApi
         refresh_access_token
         res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
       end
-      puts res.status
       return nil unless res.status >= 200 && res.status < 300
       body = JSON.parse(res.body)
     end
@@ -254,6 +253,28 @@ module MusicApi
         end
         return JSON.parse(res.body)
 
+      end
+
+      def get_track(track_id)
+        if @@client_access_token.nil?||@@client_access_token===""
+          get_access_token()
+        end
+        http1=Faraday.new(url: API_ENDPOINT)
+        res = http1.get  do |req|
+          req.url "tracks/#{track_id.gsub('spotify:track:', '')}"
+          req.headers['Content-Type'] = "application/json"
+          req.headers['Authorization'] = "Bearer #{@@client_access_token}"
+        end
+        return nil unless res.status >= 200 && res.status < 300
+        track = JSON.parse(res.body)
+        {
+          id: track['uri'],
+          artists: track['artists'].map { |artist| artist['name'] }.join(', '),
+          album: track['album']['name'],
+          thumbnail: track['album']['images'].first['url'],
+          name: track['name'],
+          duration: (track['duration_ms'] / 1000).ceil,
+        }
       end
     end
   end

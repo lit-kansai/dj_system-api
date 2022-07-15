@@ -12,6 +12,7 @@ $ bundle install
 $ rake db:create
 $ rake db:migrate
 $ $EDITOR .env
+$ rackup config.ru
 ```
 
 ### 環境変数

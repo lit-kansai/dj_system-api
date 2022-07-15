@@ -12,6 +12,7 @@ gem 'sinatra-activerecord', '~> 2.0'
 gem 'sinatra-contrib', '~> 2.1'
 gem 'webrick', '~> 1.7'
 gem "rspotify", "~> 2.11"
+gem 'thin', '~> 1.7'
 
 gem "oauth2", "~> 1.4"
 
