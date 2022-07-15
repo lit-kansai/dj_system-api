@@ -56,11 +56,36 @@ post "/room" do
     return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
 
+    provider = nil
+    playlist_id = nil
+
+    # プレイリストの指定がある場合
+    if has_params?(params, [:provider, :playlist_id])
+        case params[:provider]
+        when 'spotify'
+            return forbidden("provider is not linked") unless @spotify
+            provider = params[:provider]
+            res = @spotify.get_playlist(params[:playlist_id])
+            return not_found_error("playlist not found") unless res
+            playlist_id = params[:playlist_id]
+        end
+    elsif has_params?(params, [:provider])
+        case params[:provider]
+        when 'spotify'
+            return forbidden("provider is not linked") unless @spotify
+            provider = params[:provider]
+            res = @spotify.create_playlist(params[:room_name], params[:description])
+            playlist_id = res['id']
+        end
+    end
+
     room = @user.my_rooms.build(
         users: [@user],
         display_id: params[:url_name],
         name: params[:room_name],
-        description: params[:description]
+        description: params[:description],
+        provider: provider,
+        playlist_id: playlist_id
     )
     return internal_server_error("Failed to save") unless room.save
 
@@ -191,57 +216,42 @@ post "/user/loggedInGoogle" do
 end
 
 # ユーザー(管理者&MC)情報取得
-get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
-    if user
-        data = {
-            name: user.name,
-            avatar_url: user.avatar_url,
-            is_admin: user.is_admin
-        }
-
-        data.to_json
-
-        status 200
-    else
-        status 404
-    end
+get "/user" do
+    return unauthorized unless @user
+    
+    data = {
+        is_admin: @user.is_admin
+    }
+    send_json data
 end
 
 # ユーザー(管理者&MC)情報更新
-get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
-    user.update(
-        name: params[:name],
-        avatar_url: params[:avatar_url],
+put "/user" do
+    return unauthorized unless @user
+
+    @user.update(
         is_admin: params[:is_admin]
     )
 
-    if user.save
-        data = {
-            name: user.name,
-            avatar_url: user.avatar_url,
-            is_admin: user.is_admin
-        }
-
-        data.to_json
-
-        status 200
-    else
-        status 404
-    end
+    internal_server_error("Failed to save") unless @user.save
+    
+    data = {
+        is_admin: user.is_admin
+    }
+    send_json data
 end
 
 # ユーザー(管理者&MC)情報削除
-get "/user/:userId" do
-    user = User.find_by(userId: params[:userId])
-    user.delete
+delete "/user" do
+    return unauthorized unless @user
+    
+    @user.delete
+    session.clear
 
-    if user.save
-        status 200
-    else
-        status 404
-    end
+    data = {
+        ok: true
+    }
+    send_json data
 end
 
 # Spotifyとの連携
@@ -310,8 +320,8 @@ post "/user/playlist/:provier" do
     case params[:provier]
     when 'spotify'
         return forbidden("provider is not linked") unless @spotify
-        res = @spotify.create_playlist(params[:name])
-        data = { ok: true }
+        res = @spotify.create_playlist(params[:name], params[:description])
+        data = { ok: true, id: res['id'] }
         return send_json data
     else
         return bad_request("unsupported provider")
