@@ -6,469 +6,96 @@ require "./lib/music/music.rb"
 require "./lib/google.rb"
 require "./models/dj_system-api.rb"
 
-require "net/http"
+require './base'
+require './routes/mc'
 
-Dotenv.load
-use Rack::JSONBodyParser
+class DjSystemApi < Base
+  CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mentors.com", "http://localhost:3000", "http://127.0.0.1:3000"]
 
-configure do
-  set :protection, :except => [:json_csrf]
-end
-
-CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mentors.com", "http://localhost:3000", "http://127.0.0.1:3000"]
-
-options '*' do
+  options '*' do
     response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token, X-Requested-With, api-token"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-end
+  end
 
-before do
+  before do
     response.headers["Access-Control-Allow-Origin"] = CORS_DOMAINS.find { |domain| request.env["HTTP_ORIGIN"] == domain } || CORS_DOMAINS.first
     response.headers["Access-Control-Allow-Credentials"] = "true"
 
-    if request.env["HTTP_API_TOKEN"]
-        begin
-            decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
-            @user = User.find_by(id: decoded_token[0]['user_id'])
-            return unless @user
-            @user.access_tokens.each do |token|
-                case token.provider
-                when 'google'
-                    @google = Google.new(token.access_token)
-                when 'spotify'
-                    @spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
-                end
-            end
-        rescue => e # 例外オブジェクトを代入した変数。
-            session.clear
+    if @env["HTTP_API_TOKEN"]
+      begin
+        decoded_token = JWT.decode(request.env["HTTP_API_TOKEN"], ENV['JWT_SECRET'], true, { algorithm: 'HS256' })
+        @env["user"] = User.find_by(id: decoded_token[0]['user_id'])
+        return unless @env["user"]
+        @env["user"].access_tokens.each do |token|
+          case token.provider
+          when 'google'
+            @env["google"] = Google.new(token.access_token)
+          when 'spotify'
+            @env["spotify"] = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
+          end
         end
+      rescue => e
+        error e
+      end
     end
-end
+  end
 
-get '/' do
+  get "/" do
     "DJ GASSI API"
-end
+  end
 
-# roomの作成
-post "/room" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+  # 楽曲検索
+  get "/room/:room_id/music/search" do
+    room = Room.find_by(display_id: params[:room_id])
+    return not_found_error unless room
+    
+    case room.provider
+    when 'spotify'
 
-    provider = nil
-    playlist_id = nil
-
-    # プレイリストの指定がある場合
-    if has_params?(params, [:provider, :playlist_id])
-        case params[:provider]
-        when 'spotify'
-            return forbidden("provider is not linked") unless @spotify
-            provider = params[:provider]
-            res = @spotify.get_playlist(params[:playlist_id])
-            return not_found_error("playlist not found") unless res
-            playlist_id = params[:playlist_id]
-        end
-    elsif has_params?(params, [:provider])
-        case params[:provider]
-        when 'spotify'
-            return forbidden("provider is not linked") unless @spotify
-            provider = params[:provider]
-            res = @spotify.create_playlist(params[:room_name], params[:description])
-            playlist_id = res['id']
-        end
     end
+  end
 
-    room = @user.my_rooms.build(
-        users: [@user],
-        display_id: params[:url_name],
-        name: params[:room_name],
-        description: params[:description],
-        provider: provider,
-        playlist_id: playlist_id
-    )
-    return internal_server_error("Failed to save") unless room.save
+  # リクエスト送信
+  post "/room/:room_id/request" do
+    return bad_request("invalid parameters") unless has_params?(params, [:musics, :radio_name, :message])
 
-    send_json room
-end
-
-# 全room情報取得(管理可能なroomのみ)
-get "/room/all" do
-    return unauthorized unless @user
-    users = @user.rooms.as_json(include: [:users])
-    send_json users
-end
-
-# room個別情報表示
-get "/room/:id" do
-    return bad_request("invalid parameters") unless has_params?(params, [:id])
-
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error if room.nil?
-
-    send_json room.as_json(include: [:users, :letters])
-end
-
-# room個別情報更新
-put "/room/:id" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:id])
-
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error unless room
-
-    room.display_id = params[:url_name] if params.has_key?(:url_name)
-    room.name = params[:room_name] if params.has_key?(:room_name)
-    room.description = params[:description] if params.has_key?(:description)
-    return bad_request("Failed to save") unless room.save
-
-    send_json room.as_json(include: [:users])
-end
-
-# room個別削除
-delete "/room/:id" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:id])
-
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error unless room
-
-    room.destroy
-
-    data = {
-        code: "200",
-        ok: true
-    }
-    send_json data
-end
-
-# リクエスト送信
-post "/room/:id/request" do
-    return bad_request("invalid parameters") unless has_params?(params, [:id, :musics, :radio_name, :message])
-
-    room = @user.rooms.find_by(id: params[:id])
+    room = Room.find_by(display_id: params[:room_id])
     return not_found_error unless room
 
     letter = room.letters.build(
-        radio_name: params[:radio_name],
-        message: params[:message],
+      radio_name: params[:radio_name],
+      message: params[:message],
     )
 
     return internal_server_error("Failed to save") unless letter.save
 
     params[:musics].each do |music|
-        # 曲検索する
-        track = @spotify.get_track(music)
+      token = room.master.access_tokens.find_by(provider: room.provider)
+      next unless token
+
+      case room.provider
+      when 'spotify'
+        spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
+        track = spotify.get_track(music)
         next unless track
 
         letter.musics.build(
-            provided_music_id: track['id'],
-            name: track['name'],
-            artist: track['artists'],
-            album: track['album'],
-            thumbnail: track['thumbnail'],
-            duration: track['duration'],
+          provided_music_id: track['id'],
+          name: track['name'],
+          artist: track['artists'],
+          album: track['album'],
+          thumbnail: track['thumbnail'],
+          duration: track['duration'],
         )
-        case room.provider
-        when 'spotify'
-            if @spotify
-                @spotify.add_track_to_playlist(room.playlist_id, music)
-            end
-        else
-        end
+        spotify.add_track_to_playlist(room.playlist_id, music)
+      else
+      end
     end
 
-    data = {
-        ok: true
-    }
-    send_json data
+    send_json(ok: true)
+  end
+
+  bind_router "/mc", McRouter
 end
-
-get "/room/:id/playlist" do
-    return unauthorized unless @user
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error unless room
-
-    case room.provider
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        res = @spotify.get_playlist_tracks(room.playlist_id)
-        return not_found_error("playlist not found") unless res
-        return send_json res
-    else
-        return not_found_error("playlist not found")
-    end
-end
-
-post "/room/:id/playlist/music" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:id, :music_id])
-
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error unless room
-
-    case room.provider
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        res = @spotify.add_track_to_playlist(room.playlist_id, params[:music_id])
-        return not_found_error unless res
-        data = {
-            ok: true
-        }
-        return send_json data
-    else
-        return not_found_error("playlist not found")
-    end
-end
-
-delete "/room/:id/playlist/music" do
-    body = JSON.parse(request.body.read)
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(body, ["music_id"])
-
-    room = @user.rooms.find_by(id: params[:id])
-    return not_found_error unless room
-
-    case room.provider
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        res = @spotify.remove_track_from_playlist(room.playlist_id, body["music_id"])
-        return not_found_error unless res
-        data = {
-            ok: true
-        }
-        return send_json data
-    else
-        return not_found_error("playlist not found")
-    end
-end
-
-# 音楽サービスとの連携
-get "/music/search" do
-
-    #Header情報取得
-    headers = request.env.select { |k, v| k.start_with?('HTTP_') }
-
-    headers.each do |k, v|
-        puts "#{k} -> #{v}"
-    end
-
-
-
-    # tokenを複合化
-    JWT.decode(token, rsa_public, true, { algorithm: 'RS256' })
-
-    spotify_api = MusicApi::SpotifyApi.new("access_token")
-
-    puts spotify_api
-end
-
-# ユーザー(管理者&MC)ログイン(新規作成も)
-get "/user/login" do
-    return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
-
-    data = { redirect_url: Google.get_oauth_url(params['redirect_url']) }
-    send_json data
-end
-
-# Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
-post "/user/loggedInGoogle" do
-    return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
-
-    google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
-    return bad_request unless google_token['access_token']
-
-    google_id = Google.new(google_token['access_token']).profile['id']
-    return bad_request unless google_id
-
-    user = User.find_or_create_by(google_id: google_id)
-    user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
-    token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
-    
-    data = { api_token: token, user_id: user.id }
-    send_json data
-end
-
-# ユーザー(管理者&MC)情報取得
-get "/user" do
-    return unauthorized unless @user
-    
-    data = {
-        is_admin: @user.is_admin
-    }
-    send_json data
-end
-
-# ユーザー(管理者&MC)情報更新
-put "/user" do
-    return unauthorized unless @user
-
-    @user.update(
-        is_admin: params[:is_admin]
-    )
-
-    internal_server_error("Failed to save") unless @user.save
-    
-    data = {
-        is_admin: user.is_admin
-    }
-    send_json data
-end
-
-# ユーザー(管理者&MC)情報削除
-delete "/user" do
-    return unauthorized unless @user
-    
-    @user.delete
-    session.clear
-
-    data = {
-        ok: true
-    }
-    send_json data
-end
-
-# Spotifyとの連携
-get "/user/link/spotify" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
-
-    data = { redirect_url: MusicApi::SpotifyApi.get_oauth_url(params['redirect_url']) }
-    send_json data
-
-end
-
-post "/user/loggedInSpotify" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
-
-    spotify_token = MusicApi::SpotifyApi.get_token_by_code(params['code'], params['redirect_url'])
-    return internal_server_error("failed to get token") unless spotify_token['access_token']
-
-    @user.access_tokens.find_or_create_by(provider: 'spotify').update(access_token: spotify_token['access_token'], refresh_token: spotify_token['refresh_token'])
-
-    data = { ok: true }
-    send_json data
-end
-
-get "/user/playlists" do
-    return unauthorized unless @user
-    list = []
-    @user.access_tokens.each do |access_token|
-        case access_token.provider
-        when 'spotify'
-            return forbidden("provider is not linked") unless @spotify
-            list.concat(@spotify.get_playlists)
-        end
-    end
-    send_json list
-end
-
-get "/user/playlists/:provier" do
-    return unauthorized unless @user
-    case params[:provier]
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        return send_json @spotify.get_playlists
-    else
-        return bad_request("unsupported provider")
-    end
-end
-
-get "/user/playlist/:provier/:playlist_id" do
-    return unauthorized unless @user
-    case params[:provier]
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        res = @spotify.get_playlist_tracks(params[:playlist_id])
-        return not_found_error("playlist not found") unless res
-        return send_json res
-    else
-        return bad_request("unsupported provider")
-    end
-end
-
-post "/user/playlist/:provier" do
-    return unauthorized unless @user
-    return bad_request("invalid parameters") unless has_params?(params, [:name])
-    case params[:provier]
-    when 'spotify'
-        return forbidden("provider is not linked") unless @spotify
-        res = @spotify.create_playlist(params[:name], params[:description])
-        data = { ok: true, id: res['id'] }
-        return send_json data
-    else
-        return bad_request("unsupported provider")
-    end
-end
-
-private
-    def send_json(data)
-        content_type :json
-        data.to_json
-    end
-
-    def has_params?(params, keys)
-        keys.all? { |key| params.has_key?(key) && !params[key].empty? }
-    end
-
-    # error
-
-    def bad_request(message=nil)
-        data = {
-            "message": message || "Bad Request",
-            "status": 400
-        }
-        status 400
-        send_json data
-    end
-
-    def unauthorized(message=nil)
-        data = {
-            "message": message || "Unauthorized",
-            "status": 401
-        }
-        status 401
-        send_json data
-    end
-
-    def forbidden(message=nil)
-        data = {
-            "message": message || "Forbidden",
-            "status": 403
-        }
-        status 403
-        send_json data
-    end
-
-    def not_found_error(message=nil)
-        data = {
-            "message": message || "Not Found",
-            "status": 404
-        }
-        status 404
-        send_json data
-    end
-
-    def internal_server_error(message=nil)
-        data = {
-            "message": message || "Internal Server Error",
-            "status": 500
-        }
-        status 500
-        send_json data
-    end
-
-    def message_error
-        data = {
-            code: "---",
-            message: "Error"
-        }
-        return data
-    end
-
-# アクセストークン → ユーザーがアプリに対して他あしくログインしていることを示すトークン（googleOathに紐づけられるトークン）
-# リフレッシュトークン → セッション的なトークン
-# APIトークン → Spotify
-
-# jwt は　ログインの時に生成されるトークン　これを投げ合う　headerで取得git branch
