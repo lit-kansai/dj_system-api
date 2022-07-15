@@ -7,6 +7,7 @@ class CreateRooms < ActiveRecord::Migration[6.1]
         t.string :description
         t.string :type
         t.string :playlist_id
+        t.string :provider
         t.timestamps null: false
       end
   end
