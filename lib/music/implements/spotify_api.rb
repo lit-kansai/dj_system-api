@@ -38,14 +38,30 @@ module MusicApi
       body['tracks']['items'].map { |track|
         {
           id: track['uri'],
-          artists: track['artists'].map { |artist| { name: artist['name'], id: artist['id']} },
-          album: {
-            name: track['album']['name'],
-            jacket_url: track['album']['images'].first['url'],
-          },
+          artists: track['artists'].map { |artist| artist['name'] }.join(', '),
+          album: track['album']['name'],
+          thumbnail: track['album']['images'].first['url'],
           name: track['name'],
           duration: (track['duration_ms'] / 1000).ceil,
         }
+      }
+    end
+
+    def get_track(track_id)
+      res = @spotify_api.get "tracks/#{track_id.gsub('spotify:track:', '')}"
+      if res.status == 401
+        refresh_access_token
+        res = @spotify_api.get "tracks/#{track_id.gsub('spotify:track:', '')}"
+      end
+      return nil unless res.status >= 200 && res.status < 300
+      track = JSON.parse(res.body)
+      {
+        id: track['uri'],
+        artists: track['artists'].map { |artist| artist['name'] }.join(', '),
+        album: track['album']['name'],
+        thumbnail: track['album']['images'].first['url'],
+        name: track['name'],
+        duration: (track['duration_ms'] / 1000).ceil,
       }
     end
 
@@ -88,7 +104,6 @@ module MusicApi
         image_url: image_url,
         provider: 'spotify'
       }
-      body
     end
 
     def get_playlist_tracks(playlist_id)
@@ -103,7 +118,7 @@ module MusicApi
         track = item['track']
         {
           id: track['uri'],
-          artists: track['artists'].map { |artist| artist['name'] }.join,
+          artists: track['artists'].map { |artist| artist['name'] }.join(', '),
           album: track['album']['name'],
           thumbnail: track['album']['images'].first['url'],
           name: track['name'],

@@ -156,14 +156,29 @@ post "/room/:id/request" do
 
     return internal_server_error("Failed to save") unless letter.save
 
-    musics.each do |music|
-        letter.music.create(provided_music_id: music)
+    params[:musics].each do |music|
+        # 曲検索する
+        track = @spotify.get_track(music)
+        next unless track
+
+        letter.musics.build(
+            provided_music_id: track['id'],
+            name: track['name'],
+            artist: track['artists'],
+            album: track['album'],
+            thumbnail: track['thumbnail'],
+            duration: track['duration'],
+        )
+        case room.provider
+        when 'spotify'
+            if @spotify
+                @spotify.add_track_to_playlist(room.playlist_id, music)
+            end
+        else
+        end
     end
 
-    # 音楽API呼び出し
-
     data = {
-        code: "200",
         ok: true
     }
     send_json data
@@ -315,7 +330,7 @@ end
 
 # Spotifyとの連携
 get "/user/link/spotify" do
-
+    return unauthorized unless @user
     return bad_request("invalid parameters") unless has_params?(params, [:redirect_url])
 
     data = { redirect_url: MusicApi::SpotifyApi.get_oauth_url(params['redirect_url']) }
