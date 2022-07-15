@@ -22,6 +22,7 @@ class Room < ActiveRecord::Base
   has_many :users, through: :room_users
   has_many :letters, dependent: :destroy
   belongs_to :master, class_name: "User", foreign_key: "owner_user_id"
+  validates :display_id, uniqueness: true
 end
 
 class Letter < ActiveRecord::Base
