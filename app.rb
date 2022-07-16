@@ -11,11 +11,8 @@ require './routes/mc'
 
 class DjSystemApi < Base
   CORS_DOMAINS = [
-    "http://dj-system.lit-kansai-mentors.com/",
     "https://dj-system.lit-kansai-mentors.com/",
-    "http://dj-system-portal.pages.dev",
     "https://dj-system-portal.pages.dev",
-    "http://dj.lit-kansai-mentors.com",
     "https://dj.lit-kansai-mentors.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
