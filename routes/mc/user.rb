@@ -8,20 +8,14 @@ class McUserRouter < Base
 
   # ユーザー(管理者&MC)情報取得
   get "/" do
-    send_json(is_admin: @env["user"].is_admin)
-  end
-
-  # ユーザー(管理者&MC)情報更新
-  put "/" do
-    @env["user"].update(is_admin: params[:is_admin])
-    internal_server_error("Failed to save") unless @env["user"].save
-    send_json(is_admin: @env["user"].is_admin)
+    google_user = @env["google"].profile
+    puts google_user
+    send_json(name: google_user["name"], icon: google_user["picture"] ,is_admin: @env["user"].is_admin)
   end
 
   # ユーザー(管理者&MC)情報削除
   delete "/" do
     @env["user"].delete
-    session.clear
     send_json(ok: true)
   end
 

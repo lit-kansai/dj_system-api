@@ -92,4 +92,6 @@ class McRoomRouter < Base
   get "/:room_id/musics" do
     
   end
+
+  bind_router "/:room_id/playlist", McRoomPlaylistRouter
 end
