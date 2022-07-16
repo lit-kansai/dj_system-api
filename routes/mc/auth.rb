@@ -17,7 +17,7 @@ class McAuthRouter < Base
 
     user = User.find_or_create_by(google_id: google_id)
     user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
-    token = JWT.encode({ user_id: user.id }, ENV['JWT_SECRET'], 'HS256')
+    token = JWT.encode({ user_id: user.id, exp: Time.now.to_i + 604800 }, ENV['JWT_SECRET'], 'HS256')
     
     send_json(api_token: token, user_id: user.id)
   end

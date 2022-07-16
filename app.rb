@@ -37,7 +37,9 @@ class DjSystemApi < Base
           end
         end
       rescue => e
-        puts e
+        p e.class
+        p e.message
+        p e.backtrace.join("\n")
       end
     end
   end
