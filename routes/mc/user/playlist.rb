@@ -1,4 +1,9 @@
 class McUserPlaylistRouter < Base
+
+  before "/:provier" do
+    halt not_found_error("provider not found") unless params[:provider]
+  end
+
   # ユーザーのプレイリスト一覧
   get "/" do
     list = []
