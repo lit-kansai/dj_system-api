@@ -11,6 +11,8 @@ require './routes/mc'
 
 class DjSystemApi < Base
   CORS_DOMAINS = [
+    "http://dj-gassi.mizucoffee.net",
+    "https://dj-gassi.mizucoffee.net",
     "http://dj-system.lit-kansai-mentors.com",
     "https://dj-system.lit-kansai-mentors.com",
     "http://dj-system-portal.pages.dev",
