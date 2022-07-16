@@ -12,7 +12,7 @@ class McAuthRouter < Base
     google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
     return bad_request unless google_token['access_token']
 
-    google_id = Google.new(google_token['access_token']).profile['id']
+    google_id = Google.new(google_token['access_token'], google_token['refresh_token']).profile['id']
     return bad_request unless google_id
 
     user = User.find_or_create_by(google_id: google_id)

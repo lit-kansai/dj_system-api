@@ -2,8 +2,9 @@ class Google
   SCOPES = ['https://www.googleapis.com/auth/userinfo.profile']
   API_ENDPOINT = 'https://www.googleapis.com/oauth2/v1/'
 
-  def initialize(access_token)
+  def initialize(access_token, refresh_token)
     @access_token = access_token
+    @refresh_token = refresh_token
 
     @google_api = Faraday.new(:url => API_ENDPOINT)
     @google_api.headers['Authorization'] = "Bearer #{access_token}"
