@@ -13,7 +13,30 @@ class Google
 
   def profile()
     res = @google_api.get 'userinfo'
+    if res.status == 401
+      refresh_access_token
+      res = @google_api.get 'userinfo'
+    end
+    return nil unless res.status >= 200 && res.status < 300
     body = JSON.parse(res.body)
+  end
+
+  def refresh_access_token()
+    params = {
+      grant_type: "refresh_token",
+      refresh_token: @refresh_token
+    }
+
+    res = Faraday.new.post do |req|
+      req.headers["Authorization"] = 'Basic ' + Base64.strict_encode64(ENV['GOOGLE_API_CLIENT_ID'] + ':' + ENV['GOOGLE_API_CLIENT_SECRET'])
+      req.headers["Content-Type"] = "application/x-www-form-urlencoded"
+      req.url 'https://accounts.google.com/o/oauth2/token'
+      req.body = params.to_query
+    end
+    
+    body = JSON.parse(res.body)
+    @access_token = body['access_token']
+    @google_api.headers['Authorization'] = "Bearer #{@access_token}"
   end
 
   class << self
@@ -23,6 +46,8 @@ class Google
         client_id: ENV['GOOGLE_API_CLIENT_ID'],
         scope: SCOPES.join(' '),
         redirect_uri: redirect_uri,
+        access_type: 'offline',
+        prompt: 'consent',
         state: SecureRandom.hex(16)
       }
 
