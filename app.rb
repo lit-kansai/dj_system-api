@@ -8,6 +8,7 @@ require "./models/dj_system-api.rb"
 
 require './base'
 require './routes/mc'
+require './routes/room'
 
 class DjSystemApi < Base
   CORS_DOMAINS = ["http://dj.lit-kansai-mentors.com", "https://dj.lit-kansai-mentors.com", "http://localhost:3000", "http://127.0.0.1:3000"]
@@ -48,56 +49,6 @@ class DjSystemApi < Base
     "DJ GASSI API"
   end
 
-  # 楽曲検索
-  get "/room/:room_id/music/search" do
-    room = Room.find_by(display_id: params[:room_id])
-    return not_found_error unless room
-    
-    case room.provider
-    when 'spotify'
-
-    end
-  end
-
-  # リクエスト送信
-  post "/room/:room_id/request" do
-    return bad_request("invalid parameters") unless has_params?(params, [:musics, :radio_name, :message])
-
-    room = Room.find_by(display_id: params[:room_id])
-    return not_found_error unless room
-
-    letter = room.letters.build(
-      radio_name: params[:radio_name],
-      message: params[:message],
-    )
-
-    return internal_server_error("Failed to save") unless letter.save
-
-    params[:musics].each do |music|
-      token = room.master.access_tokens.find_by(provider: room.provider)
-      next unless token
-
-      case room.provider
-      when 'spotify'
-        spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
-        track = spotify.get_track(music)
-        next unless track
-
-        letter.musics.build(
-          provided_music_id: track['id'],
-          name: track['name'],
-          artist: track['artists'],
-          album: track['album'],
-          thumbnail: track['thumbnail'],
-          duration: track['duration'],
-        )
-        spotify.add_track_to_playlist(room.playlist_id, music)
-      else
-      end
-    end
-
-    send_json(ok: true)
-  end
-
   bind_router "/mc", McRouter
+  bind_router "/room", RoomRouter
 end

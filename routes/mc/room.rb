@@ -7,14 +7,8 @@ class McRoomRouter < Base
 
   # ルームIDが必要なURIの場合 @env["room"] にルーム情報を入れる
   before "/:room_id*" do
-    if params[:room_id]
-      if @env["user"]
-        @env["room"] = @env["user"].rooms.find_by(display_id: params[:room_id])
-      else
-        @env["room"] = Room.find_by(display_id: params[:room_id])
-      end
-      halt not_found_error("Room not found") if @env["room"].nil?
-    end
+    @env["room"] = @env["user"].rooms.find_by(display_id: params[:room_id])
+    halt not_found_error("Room not found") if @env["room"].nil?
   end
 
   # room個別情報
