@@ -79,7 +79,8 @@ class McRoomRouter < Base
 
   # room内お便り取得
   get "/:room_id/letters" do
-    
+    @letters = @env["room"].letters.includes(:music)
+    send_json @letters
   end
 
   # room内楽曲取得
