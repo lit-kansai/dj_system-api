@@ -84,7 +84,8 @@ class McRoomRouter < Base
 
   # room内楽曲取得
   get "/:room_id/musics" do
-    
+    @musics = @env["room"].musics
+    send_json @musics
   end
 
   bind_router "/:room_id/playlist", McRoomPlaylistRouter
