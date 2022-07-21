@@ -21,7 +21,10 @@ class RoomRouter < Base
     case room.provider
     when 'spotify'
       search_name = params[:q]
-      music_list = MusicApi::SpotifyApi.search(search_name)
+      token = room.master.access_tokens.find_by(provider: 'spotify')
+      return forbidden("provider is not linked") unless token
+      spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
+      music_list = spotify.search(search_name)
       send_json music_list
     else
       forbidden("provider is not linked")
