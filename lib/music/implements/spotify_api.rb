@@ -251,8 +251,23 @@ module MusicApi
           req.headers['Content-Type'] = "application/json"
           req.headers['Authorization'] = "Bearer #{@@client_access_token}"
         end
-        return JSON.parse(res.body)
-
+        music_list = []
+        music_text = JSON.parse(res.body)
+        if music_text.dig("tracks","total").nil? || music_text.dig("tracks","total") == 0
+          return music_list
+        else
+          music_text["tracks"]["items"].each do |music|
+            music_list.push({
+              "id" => music.dig("uri").to_s,
+              "artists" => music.dig("album","artists",0,"name").to_s,
+              "album" => music.dig("album","name").to_s,
+              "thumbnail" => music.dig("album","images",0,"url").to_s,
+              "name" => music.dig("name").to_s,
+              "duration" => (music.dig("duration_ms")/1000).to_s,
+              })
+          end
+        end
+        return music_list
       end
 
       def get_track(track_id)
