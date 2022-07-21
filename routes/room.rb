@@ -23,6 +23,8 @@ class RoomRouter < Base
       search_name = params[:q]
       music_list = MusicApi::SpotifyApi.search(search_name)
       send_json music_list
+    else
+      forbidden("provider is not linked")
     end
   end
 
@@ -60,6 +62,7 @@ class RoomRouter < Base
         )
         spotify.add_track_to_playlist(room.playlist_id, music)
       else
+        forbidden("provider is not linked")
       end
     end
 
