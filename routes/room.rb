@@ -20,7 +20,10 @@ class RoomRouter < Base
     
     case room.provider
     when 'spotify'
-
+      search_name=params[:q].delete('{}')
+      music_list=MusicApi::SpotifyApi.search(search_name)
+      puts music_list
+      return music_list unless room
     end
   end
 
