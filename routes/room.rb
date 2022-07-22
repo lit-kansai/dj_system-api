@@ -33,14 +33,14 @@ class RoomRouter < Base
 
   # リクエスト送信
   post "/:room_id/request" do
-    return bad_request("invalid parameters") unless has_params?(params, [:musics, :radio_name, :message])
+    return bad_request("invalid parameters") unless has_params?(params, [:musics])
 
     room = Room.find_by(display_id: params[:room_id])
     return not_found_error unless room
 
     letter = room.letters.build(
-      radio_name: params[:radio_name],
-      message: params[:message],
+      radio_name: params[:radio_name] || "",
+      message: params[:message] || "",
     )
 
     return internal_server_error("Failed to save") unless letter.save
