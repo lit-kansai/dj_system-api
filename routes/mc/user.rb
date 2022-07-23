@@ -9,7 +9,9 @@ class McUserRouter < Base
   # ユーザー(管理者&MC)情報取得
   get "/" do
     google_user = @env["google"].profile
+    puts google_user
     send_json(
+      email: google_user["email"],
       name: google_user["name"],
       icon: google_user["picture"],
       is_admin: @env["user"].is_admin,

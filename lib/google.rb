@@ -1,5 +1,5 @@
 class Google
-  SCOPES = ['https://www.googleapis.com/auth/userinfo.profile']
+  SCOPES = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']
   API_ENDPOINT = 'https://www.googleapis.com/oauth2/v1/'
 
   def initialize(access_token, refresh_token)
