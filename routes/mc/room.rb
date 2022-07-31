@@ -18,26 +18,27 @@ class McRoomRouter < Base
 
   # room作成
   post "/" do
-    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+    return bad_request("invalid parameters") unless has_params?(params, [:provider, :url_name, :room_name, :description])
 
-    provider = nil
+    provider = params[:provider]
     playlist_id = nil
 
+    case params[:provider]
+    when 'spotify'
+      return forbidden("provider is not linked") unless @env["spotify"]
+    end
+
     # プレイリストの指定がある場合
-    if has_params?(params, [:provider, :playlist_id])
+    if has_params?(params, [:playlist_id])
       case params[:provider]
       when 'spotify'
-        return forbidden("provider is not linked") unless @env["spotify"]
-        provider = params[:provider]
         res = @env["spotify"].get_playlist(params[:playlist_id])
         return not_found_error("playlist not found") unless res
         playlist_id = params[:playlist_id]
       end
-    elsif has_params?(params, [:provider])
+    else
       case params[:provider]
       when 'spotify'
-        return forbidden("provider is not linked") unless @env["spotify"]
-        provider = params[:provider]
         res = @env["spotify"].create_playlist(params[:room_name], params[:description])
         playlist_id = res['id']
       end
