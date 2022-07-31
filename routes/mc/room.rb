@@ -26,6 +26,8 @@ class McRoomRouter < Base
     case params[:provider]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
+    else
+      return forbidden("provider is not linked")
     end
 
     # プレイリストの指定がある場合
