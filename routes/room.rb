@@ -38,12 +38,13 @@ class RoomRouter < Base
     room = Room.find_by(display_id: params[:room_id])
     return not_found_error unless room
 
-    letter = room.letters.build(
-      radio_name: params[:radio_name] || "",
-      message: params[:message] || "",
-    )
-
-    return internal_server_error("Failed to save") unless letter.save
+    unless params[:radio_name].nil? || params[:radio_name] == "" && params[:message].nil? || params[:message] == ""
+      letter = room.letters.build(
+        radio_name: params[:radio_name] || "",
+        message: params[:message] || "",
+      )
+      return internal_server_error("Failed to save") unless letter.save
+    end
 
     params[:musics].each do |music|
       token = room.master.access_tokens.find_by(provider: room.provider)
@@ -54,15 +55,15 @@ class RoomRouter < Base
         spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
         track = spotify.get_track(music)
         next unless track
-
-        letter.musics.build(
-          provided_music_id: track['id'],
-          name: track['name'],
-          artist: track['artists'],
-          album: track['album'],
-          thumbnail: track['thumbnail'],
-          duration: track['duration'],
+        m = letter.musics.build(
+          provided_music_id: track[:id],
+          name: track[:name],
+          artist: track[:artists],
+          album: track[:album],
+          thumbnail: track[:thumbnail],
+          duration: track[:duration],
         )
+        m.save
         spotify.add_track_to_playlist(room.playlist_id, music)
       else
         forbidden("provider is not linked")

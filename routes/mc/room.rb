@@ -13,31 +13,34 @@ class McRoomRouter < Base
 
   # room個別情報
   get "/:room_id" do
-    send_json @env["room"].as_json(include: [:users, :letters])
+    send_json @env["room"].as_json(include: [:users, :musics, letters: { include: [:musics] }])
   end
 
   # room作成
   post "/" do
-    return bad_request("invalid parameters") unless has_params?(params, [:url_name, :room_name, :description])
+    return bad_request("invalid parameters") unless has_params?(params, [:provider, :url_name, :room_name, :description])
 
-    provider = nil
+    provider = params[:provider]
     playlist_id = nil
 
+    case params[:provider]
+    when 'spotify'
+      return forbidden("provider is not linked") unless @env["spotify"]
+    else
+      return forbidden("provider is not linked")
+    end
+
     # プレイリストの指定がある場合
-    if has_params?(params, [:provider, :playlist_id])
+    if has_params?(params, [:playlist_id])
       case params[:provider]
       when 'spotify'
-        return forbidden("provider is not linked") unless @env["spotify"]
-        provider = params[:provider]
         res = @env["spotify"].get_playlist(params[:playlist_id])
         return not_found_error("playlist not found") unless res
         playlist_id = params[:playlist_id]
       end
-    elsif has_params?(params, [:provider])
+    else
       case params[:provider]
       when 'spotify'
-        return forbidden("provider is not linked") unless @env["spotify"]
-        provider = params[:provider]
         res = @env["spotify"].create_playlist(params[:room_name], params[:description])
         playlist_id = res['id']
       end
@@ -79,13 +82,13 @@ class McRoomRouter < Base
 
   # room内お便り取得
   get "/:room_id/letters" do
-    @letters = @env["room"].letters.includes(:music)
+    @letters = @env["room"].letters.as_json(include: [:musics])
     send_json @letters
   end
 
   # room内楽曲取得
   get "/:room_id/musics" do
-    @musics = @env["room"].musics
+    @musics = @env["room"].musics.as_json(include: [:letter])
     send_json @musics
   end
 
