@@ -21,6 +21,7 @@ class Room < ActiveRecord::Base
   has_many :room_users, dependent: :destroy
   has_many :users, through: :room_users
   has_many :letters, dependent: :destroy
+  has_many :musics, through: :letters
   belongs_to :master, class_name: "User", foreign_key: "owner_user_id"
   validates :display_id, uniqueness: true
 end

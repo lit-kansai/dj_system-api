@@ -55,15 +55,15 @@ class RoomRouter < Base
         spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
         track = spotify.get_track(music)
         next unless track
-
-        letter.musics.build(
-          provided_music_id: track['id'],
-          name: track['name'],
-          artist: track['artists'],
-          album: track['album'],
-          thumbnail: track['thumbnail'],
-          duration: track['duration'],
+        m = letter.musics.build(
+          provided_music_id: track[:id],
+          name: track[:name],
+          artist: track[:artists],
+          album: track[:album],
+          thumbnail: track[:thumbnail],
+          duration: track[:duration],
         )
+        m.save
         spotify.add_track_to_playlist(room.playlist_id, music)
       else
         forbidden("provider is not linked")

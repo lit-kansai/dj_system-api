@@ -13,7 +13,7 @@ class McRoomRouter < Base
 
   # room個別情報
   get "/:room_id" do
-    send_json @env["room"].as_json(include: [:users, :letters])
+    send_json @env["room"].as_json(include: [:users, :musics, letters: { include: [:musics] }])
   end
 
   # room作成
@@ -82,13 +82,13 @@ class McRoomRouter < Base
 
   # room内お便り取得
   get "/:room_id/letters" do
-    @letters = @env["room"].letters.includes(:music)
+    @letters = @env["room"].letters.as_json(include: [:musics])
     send_json @letters
   end
 
   # room内楽曲取得
   get "/:room_id/musics" do
-    @musics = @env["room"].musics
+    @musics = @env["room"].musics.as_json(include: [:letter])
     send_json @musics
   end
 
