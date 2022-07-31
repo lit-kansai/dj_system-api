@@ -92,5 +92,19 @@ class McRoomRouter < Base
     send_json @musics
   end
 
+  # room内お便り削除
+  delete "/:room_id/letter/:letter_id" do
+    @letter = @env["room"].letters.find_by(id: params[:letter_id])
+    @letter.destroy
+    send_json ok: true
+  end
+
+  # room内楽曲削除
+  delete "/:room_id/music/:music_id" do
+    @music = @env["room"].musics.find_by(id: params[:music_id])
+    @music.destroy
+    send_json ok: true
+  end
+
   bind_router "/:room_id/playlist", McRoomPlaylistRouter
 end
