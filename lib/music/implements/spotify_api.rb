@@ -149,6 +149,10 @@ module MusicApi
           track_id
         ]
       }
+      playlist_tracks = get_playlist_tracks(playlist_id)
+      unless playlist_tracks.all? {|t| t[:id] != track_id }
+        return nil
+      end
       res = @spotify_api.post "playlists/#{playlist_id}/tracks", JSON.generate(data)
       if res.status == 401
         refresh_access_token

@@ -1,7 +1,7 @@
 require_relative './user/link'
 require_relative './user/playlist'
 
-SUPPORTED_PROVIDERS = ['spotify', 'apple_music']
+SUPPORTED_PROVIDERS = ['spotify', 'applemusic']
 
 class McUserRouter < Base
   before do
