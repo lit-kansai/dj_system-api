@@ -38,13 +38,11 @@ class RoomRouter < Base
     room = Room.find_by(display_id: params[:room_id])
     return not_found_error unless room
 
-    unless params[:radio_name].nil? || params[:radio_name] == "" && params[:message].nil? || params[:message] == ""
-      letter = room.letters.build(
-        radio_name: params[:radio_name] || "",
-        message: params[:message] || "",
-      )
-      return internal_server_error("Failed to save") unless letter.save
-    end
+    letter = room.letters.build(
+      radio_name: params[:radio_name] || "",
+      message: params[:message] || "",
+    )
+    return internal_server_error("Failed to save") unless letter.save
 
     params[:musics].each do |music|
       token = room.master.access_tokens.find_by(provider: room.provider)
