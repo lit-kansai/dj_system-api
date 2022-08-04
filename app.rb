@@ -11,18 +11,7 @@ require './routes/mc'
 require './routes/room'
 
 class DjSystemApi < Base
-  CORS_DOMAINS = [
-    "http://dj-gassi.mizucoffee.net",
-    "https://dj-gassi.mizucoffee.net",
-    "http://dj-system.lit-kansai-mentors.com",
-    "https://dj-system.lit-kansai-mentors.com",
-    "http://dj-system-portal.pages.dev",
-    "https://dj-system-portal.pages.dev",
-    "http://dj.lit-kansai-mentors.com",
-    "https://dj.lit-kansai-mentors.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-  ]
+  CORS_DOMAINS = ENV['CORS_DOMAINS'].split(',')
 
   options '*' do
     response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
