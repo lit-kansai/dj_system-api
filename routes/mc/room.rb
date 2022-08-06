@@ -88,13 +88,13 @@ class McRoomRouter < Base
 
   # room内楽曲取得
   get "/:room_id/musics" do
-    @musics = @env["room"].musics.as_json(include: [:letter])
+    @musics = @env["room"].musics.order(created_at: "DESC").as_json(include: [:letter])
     send_json @musics
   end
 
   # room内お便り削除
   delete "/:room_id/letter/:letter_id" do
-    @letter = @env["room"].letters.find_by(id: params[:letter_id])
+    @letter = @env["room"].letters.order(created_at: "DESC").find_by(id: params[:letter_id])
     @letter.destroy
     send_json ok: true
   end
