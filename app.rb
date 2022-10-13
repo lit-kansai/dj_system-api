@@ -49,6 +49,14 @@ class DjSystemApi < Base
     "DJ GASSI API"
   end
 
+  get "/docs" do
+    redirect "/docs/"
+  end
+
+  get "/docs/" do
+    File.read(File.join('public', 'docs', 'index.html'))
+  end
+
   bind_router "/mc", McRouter
   bind_router "/room", RoomRouter
 end
