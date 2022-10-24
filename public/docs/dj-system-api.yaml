@@ -9,10 +9,10 @@ servers:
   - url: 'https://dj-system-api.herokuapp.com/'
   - url: 'http://localhost:4567/'
 tags:
-  - name: /mc/room
-    description: ルームの管理
   - name: /mc/auth
     description: 認証 / ログイン
+  - name: /mc/room
+    description: ルームの管理
   - name: room
   - name: music
     description: 音楽サービスとの連携
@@ -29,6 +29,7 @@ paths:
           name: redirect_url
           schema:
             type: string
+          example: http://localhost:3000/api/google/callback
           required: true
           description: ログイン成功時のリダイレクトURL
       responses:
@@ -37,9 +38,55 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RoomWithUser'
+                type: object
+                properties:
+                  redirect_url:
+                    type: string
+                    format: string
+                    example: https://accounts.google.com/o/oauth2/auth...
+                    description: ログイン用URL
+        "400":
+          description: リクエストボディが不足している。もしくは、不正な値が渡された。
+        "500":
+          description: Google APIの呼び出しに失敗した
+  /mc/auth/signin/callback:
+    post:
+      summary: Step.2 Googleログイン用Callback
+      tags:
+        - /mc/auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                redirect_url:
+                  type: string
+                  format: string
+                  example: http://localhost:3000/api/google/callback
+                  description: URL用のテキスト（URLのIDになる）
+                code:
+                  type: string
+                  format: string
+                  example: 4/0...
+                  description: コールバックURLにパラメータとして含まれているコード（URLデコードしたもの）
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_token:
+                    type: string
+                    format: string
+                    description: APIトークン
+                  user_id:
+                    type: number
+                    format: number
+                    description: ユーザーID
+
   /mc/room:
     get:
       summary: 自身管理下のルーム一覧取得
