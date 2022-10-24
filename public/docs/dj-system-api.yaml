@@ -4,18 +4,42 @@ info:
   version: 1.0.0
   description: MC支援サービス「DJ System」用API
 servers:
+  - url: "/"
   - url: 'https://dj-system-api-staging.herokuapp.com/'
   - url: 'https://dj-system-api.herokuapp.com/'
   - url: 'http://localhost:4567/'
 tags:
   - name: /mc/room
     description: ルームの管理
+  - name: /mc/auth
+    description: 認証 / ログイン
   - name: room
   - name: music
     description: 音楽サービスとの連携
   - name: user
     description: ユーザー（管理者 & MC）の管理
 paths:
+  /mc/auth/signin:
+    get:
+      summary: Step.1 Googleログイン用URLの発行
+      tags:
+        - /mc/auth
+      parameters:
+        - in: query
+          name: redirect_url
+          schema:
+            type: string
+          required: true
+          description: ログイン成功時のリダイレクトURL
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomWithUser'
   /mc/room:
     get:
       summary: 自身管理下のルーム一覧取得
@@ -86,6 +110,7 @@ paths:
           description: 認証情報が正しくない
         "500":
           description: ルームの作成に失敗した（url_nameが重複している場合など）
+
   /room/{roomId}:
     get:
       summary: ルーム個別情報表示
