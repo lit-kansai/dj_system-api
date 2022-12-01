@@ -2,15 +2,18 @@ openapi: 3.0.0
 info:
   title: DJ System API
   version: 1.0.0
-  description: MC支援サービス「DJ System」用API
+  description: MC支援サービス「DJ System」用API<br>
+    <h3>使い方</h3>
+    1. /mc/authを使ってログインする<br>
+    2. 右上にあるAuthorizeをクリックして取得したAPIトークンを入力する<br>
+    3. 各種APIを検証する
 servers:
   - url: "/"
-  - url: 'https://dj-system-api-staging.herokuapp.com/'
-  - url: 'https://dj-system-api.herokuapp.com/'
-  - url: 'http://localhost:4567/'
 tags:
   - name: /mc/auth
     description: 認証 / ログイン
+  - name: /mc/user
+    description: ユーザ関連API
   - name: /mc/room
     description: ルームの管理
   - name: room
@@ -46,9 +49,7 @@ paths:
                     example: https://accounts.google.com/o/oauth2/auth...
                     description: ログイン用URL
         "400":
-          description: リクエストボディが不足している。もしくは、不正な値が渡された。
-        "500":
-          description: Google APIの呼び出しに失敗した
+          description: リクエストボディが不足している
   /mc/auth/signin/callback:
     post:
       summary: Step.2 Googleログイン用Callback
@@ -86,7 +87,56 @@ paths:
                     type: number
                     format: number
                     description: ユーザーID
-
+        "400":
+          description: リクエストボディが不足している。もしくは、不正な値が渡された。
+        "500":
+          description: Google APIの呼び出しに失敗した
+  /mc/user:
+    get:
+      summary: ユーザー情報取得
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    description: Eメールアドレス
+                  name:
+                    type: string
+                    format: string
+                    description: ユーザー名
+                  icon:
+                    type: string
+                    format: url
+                    description: アイコンURL
+                  is_admin:
+                    type: boolean
+                    format: boolean
+                    description: adminフラグ
+                  linked_providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        provider:
+                          type: string
+                          format: string
+                          description: 音楽サービスの種類（"spotify" or "applemusic")
+                        is_connected:
+                          type: boolean
+                          format: boolean
+                          description: 連携されているかどうか
+        "401":
+          description: 認証情報が正しくない
   /mc/room:
     get:
       summary: 自身管理下のルーム一覧取得
@@ -162,9 +212,16 @@ paths:
     get:
       summary: ルーム個別情報表示
       tags:
-        - room
+        - /mc/room
+      security:
+        - ApiToken: []
       parameters:
-        - $ref: '#/components/parameters/RoomId'
+        - name: roomId
+          in: path
+          description: ルームDisplayID
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -172,10 +229,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
-        "400":
-          $ref: '#/components/responses/BadRequest'
+        "401":
+          description: 認証情報が正しくない
         "404":
-          $ref: '#/components/responses/NotFound'
+          description: ルームが見つからなかった
     put:
       summary: ルーム個別情報更新
       tags:
