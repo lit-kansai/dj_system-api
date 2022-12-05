@@ -13,7 +13,7 @@ class McRoomRouter < Base
 
   # room個別情報
   get "/:room_id" do
-    send_json @env["room"].as_json(include: [:users, :musics, letters: { include: [:musics] }])
+    send_json @env["room"].as_json(include: [:users, musics: { include: [:letter] }, letters: { include: [:musics] }])
   end
 
   # room作成
@@ -28,6 +28,10 @@ class McRoomRouter < Base
       return forbidden("provider is not linked") unless @env["spotify"]
     else
       return forbidden("provider is not linked")
+    end
+
+    if Room.exists?(display_id: params[:url_name])
+      return bad_request("url_name is already used")
     end
 
     # プレイリストの指定がある場合
@@ -61,17 +65,21 @@ class McRoomRouter < Base
 
   # 全room情報取得(管理可能なroomのみ)
   get "/" do
-    send_json @env["user"].rooms.as_json(include: [:users])
+    send_json @env["user"].rooms.as_json()
   end
 
   # room個別情報更新
   put "/:room_id" do
+    if Room.exists?(display_id: params[:url_name]) && @env["room"].display_id != params[:url_name]
+      return bad_request("url_name is already used")
+    end
+
     @env["room"].display_id = params[:url_name] if params.has_key?(:url_name)
     @env["room"].name = params[:room_name] if params.has_key?(:room_name)
     @env["room"].description = params[:description] if params.has_key?(:description)
-    return bad_request("Failed to save") unless @env["room"].save
+    return internal_server_error("Failed to save") unless @env["room"].save
 
-    send_json @env["room"].as_json(include: [:users])
+    send_json @env["room"].as_json()
   end
 
   # room個別削除
@@ -95,6 +103,7 @@ class McRoomRouter < Base
   # room内お便り削除
   delete "/:room_id/letter/:letter_id" do
     @letter = @env["room"].letters.find_by(id: params[:letter_id])
+    return not_found_error("letter not found") if @letter.nil?
     @letter.destroy
     send_json ok: true
   end
@@ -102,6 +111,7 @@ class McRoomRouter < Base
   # room内楽曲削除
   delete "/:room_id/music/:music_id" do
     @music = @env["room"].musics.find_by(id: params[:music_id])
+    return not_found_error("music not found") if @music.nil?
     @music.destroy
     send_json ok: true
   end

@@ -10,31 +10,122 @@ info:
 servers:
   - url: "/"
 tags:
+  - name: /room
+    description: 公開API
   - name: /mc/auth
     description: 認証 / ログイン
   - name: /mc/user
     description: ユーザ関連API
   - name: /mc/room
-    description: ルームの管理
-  - name: room
-  - name: music
-    description: 音楽サービスとの連携
-  - name: user
-    description: ユーザー（管理者 & MC）の管理
+    description: Roomの管理
 paths:
+  /room/{roomId}:
+    get:
+      summary: Room情報表示
+      tags:
+        - /room
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+      responses:
+        "200":
+          description: Roomの情報が返される
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    $ref: "#/components/schemas/room_display_id"
+                  name:
+                    $ref: "#/components/schemas/room_name"
+                  description:
+                    $ref: "#/components/schemas/description"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /room/{roomId}/music/search:
+    get:
+      summary: 音楽検索
+      tags:
+        - /room
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+        - $ref: '#/components/parameters/query'
+      responses:
+        "200":
+          description: 音楽情報の配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/music_id"
+                    artists:
+                      $ref: "#/components/schemas/artists"
+                    album:
+                      $ref: "#/components/schemas/album"
+                    name:
+                      $ref: "#/components/schemas/music_name"
+                    thumbnail:
+                      $ref: "#/components/schemas/thumbnail"
+                    duration:
+                      $ref: "#/components/schemas/duration"
+                required:
+                  - id
+                  - artists
+                  - album
+                  - name
+                  - thumbnail
+                  - duration
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /room/{roomId}/request:
+    post:
+      summary: リクエスト送信
+      tags:
+        - /room
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                musics:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/music_id"
+                radio_name:
+                  $ref: "#/components/schemas/radio_name"
+                message:
+                  $ref: "#/components/schemas/message"
+              required:
+                - musics
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/auth/signin:
     get:
       summary: Step.1 Googleログイン用URLの発行
       tags:
         - /mc/auth
       parameters:
-        - in: query
-          name: redirect_url
-          schema:
-            type: string
-          example: http://localhost:3000/api/google/callback
-          required: true
-          description: ログイン成功時のリダイレクトURL
+        - $ref: "#/components/parameters/google_redirect_url"
       responses:
         "200":
           description: Success
@@ -44,12 +135,11 @@ paths:
                 type: object
                 properties:
                   redirect_url:
-                    type: string
-                    format: string
-                    example: https://accounts.google.com/o/oauth2/auth...
-                    description: ログイン用URL
+                    $ref: "#/components/schemas/login_url"
+                required:
+                  - redirect_url
         "400":
-          description: リクエストボディが不足している
+          $ref: "#/components/responses/BadRequest"
   /mc/auth/signin/callback:
     post:
       summary: Step.2 Googleログイン用Callback
@@ -62,15 +152,12 @@ paths:
               type: object
               properties:
                 redirect_url:
-                  type: string
-                  format: string
-                  example: http://localhost:3000/api/google/callback
-                  description: URL用のテキスト（URLのIDになる）
+                  $ref: "#/components/schemas/redirect_url"
                 code:
-                  type: string
-                  format: string
-                  example: 4/0...
-                  description: コールバックURLにパラメータとして含まれているコード（URLデコードしたもの）
+                  $ref: "#/components/schemas/code"
+              required:
+                - redirect_url
+                - code
       responses:
         "200":
           description: Success
@@ -80,17 +167,16 @@ paths:
                 type: object
                 properties:
                   api_token:
-                    type: string
-                    format: string
-                    description: APIトークン
+                    $ref: "#/components/schemas/api_token"
                   user_id:
-                    type: number
-                    format: number
-                    description: ユーザーID
+                    $ref: "#/components/schemas/user_id"
+                required:
+                  - api_token
+                  - user_id
         "400":
-          description: リクエストボディが不足している。もしくは、不正な値が渡された。
+          $ref: "#/components/responses/BadRequest"
         "500":
-          description: Google APIの呼び出しに失敗した
+          $ref: "#/components/responses/InternalServerError"
   /mc/user:
     get:
       summary: ユーザー情報取得
@@ -104,42 +190,75 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/user"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: ユーザー削除
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /mc/user/link/spotify:
+    get:
+      summary: Step.1 Spotify連携ログイン用URLの発行
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      parameters:
+        - $ref: "#/components/parameters/spotify_redirect_url"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
                 type: object
                 properties:
-                  email:
-                    type: string
-                    format: email
-                    description: Eメールアドレス
-                  name:
-                    type: string
-                    format: string
-                    description: ユーザー名
-                  icon:
-                    type: string
-                    format: url
-                    description: アイコンURL
-                  is_admin:
-                    type: boolean
-                    format: boolean
-                    description: adminフラグ
-                  linked_providers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        provider:
-                          type: string
-                          format: string
-                          description: 音楽サービスの種類（"spotify" or "applemusic")
-                        is_connected:
-                          type: boolean
-                          format: boolean
-                          description: 連携されているかどうか
+                  redirect_url:
+                    $ref: "#/components/schemas/login_url"
+                required:
+                  - redirect_url
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: 認証情報が正しくない
+          $ref: "#/components/responses/Unauthorized"
+  /mc/user/link/spotify/callback:
+    post:
+      summary: Step.2 Spotify連携ログイン用Callback
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                redirect_url:
+                  $ref: '#/components/schemas/redirect_url'
+                code:
+                  $ref: '#/components/schemas/code'
+              required:
+                - redirect_url
+                - code
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/room:
     get:
-      summary: 自身管理下のルーム一覧取得
+      summary: 自身管理下のRoom一覧取得
       tags:
         - /mc/room
       security:
@@ -152,11 +271,11 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RoomWithUser'
+                  $ref: '#/components/schemas/room'
         "401":
-          description: 認証情報が正しくない
+          $ref: "#/components/responses/Unauthorized"
     post:
-      summary: ルーム作成
+      summary: Room作成
       tags:
         - /mc/room
       security:
@@ -168,499 +287,624 @@ paths:
               type: object
               properties:
                 url_name:
-                  type: string
-                  format: string
-                  example: dj_event_a_22
-                  description: URL用のテキスト（URLのIDになる）
+                  $ref: "#/components/schemas/room_display_id"
                 room_name:
-                  type: string
-                  format: string
-                  example: DJ EVENT A
-                  description: ルーム名（ページに表示される）
+                  $ref: "#/components/schemas/room_name"
                 description:
-                  type: string
-                  format: string
-                  example: "イベントA 22年"
-                  description: ルーム概要（管理画面用メモ）
+                  $ref: "#/components/schemas/description"
                 provider:
-                  type: string
-                  format: string
-                  example: spotify
-                  description: プロバイダ。現時点ではspotifyのみ対応
-                  
+                  $ref: "#/components/schemas/provider"
+                playlist_id:
+                  $ref: "#/components/schemas/playlist_id"
+              required:
+                - url_name
+                - room_name
+                - description
+                - provider  
       responses:
         "200":
-          description: MC用のURLが返される
+          description: 作成されたRoom情報が返される
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  url:
-                    type: string
-                    format: uri
-                    example: test
-                    description: 作成したルームのMCページURL
+                  url_name:
+                    $ref: "#/components/schemas/room_display_id"
+                  room_name:
+                    $ref: "#/components/schemas/room_name"
+                  description:
+                    $ref: "#/components/schemas/description"
+                  provider:
+                    $ref: "#/components/schemas/provider"
         "400":
-          description: リクエストボディが不足している
+          $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
-          description: 認証情報が正しくない
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
         "500":
-          description: ルームの作成に失敗した（url_nameが重複している場合など）
-
-  /room/{roomId}:
+          description: Roomの作成に失敗した
+  /mc/room/{roomId}:
     get:
-      summary: ルーム個別情報表示
+      summary: Room情報表示
       tags:
         - /mc/room
       security:
         - ApiToken: []
       parameters:
-        - name: roomId
-          in: path
-          description: ルームDisplayID
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
-          description: Success
+          description: Roomの詳細情報が返される
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Room'
+                $ref: '#/components/schemas/DetailedRoom'
         "401":
-          description: 認証情報が正しくない
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: ルームが見つからなかった
+          $ref: "#/components/responses/NotFound"
     put:
-      summary: ルーム個別情報更新
+      summary: Room情報更新
       tags:
-        - room
+        - /mc/room
       security:
         - ApiToken: []
+      parameters:
+        - $ref: '#/components/parameters/room_id'
       requestBody:
         description: created_atとupdated_atは自動設定
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Room'
-      parameters:
-        - $ref: '#/components/parameters/RoomId'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Room'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "404":
-          $ref: '#/components/responses/NotFound'
-    delete:
-      summary: ルーム個別削除
-      tags:
-        - room
-      security:
-        - ApiToken: []
-      parameters:
-        - $ref: '#/components/parameters/RoomId'
-      responses:
-        "200":
-          description: Success
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "404":
-          $ref: '#/components/responses/NotFound'
-  /room/{roomId}/musics:
-    get:
-      summary: ルーム内の音楽情報取得
-      tags:
-        - room
-      security:
-        - ApiToken: []
-      parameters:
-        - $ref: '#/components/parameters/RoomId'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Music'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "404":
-          $ref: '#/components/responses/NotFound'
-  /room/{roomId}/letters:
-    get:
-      summary: ルーム内のお便り情報取得
-      tags:
-        - room
-      security:
-        - ApiToken: []
-      parameters:
-        - $ref: '#/components/parameters/RoomId'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Letter'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "404":
-          $ref: '#/components/responses/NotFound'
-  /room/{roomId}/request:
-    post:
-      summary: リクエスト送信
-      tags:
-        - room
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RequestMusic'
-      parameters:
-        - $ref: '#/components/parameters/RoomId'
-      responses:
-        "200":
-          description: Success
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "404":
-          $ref: '#/components/responses/NotFound'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-  /music/search:
-    get:
-      summary: 音楽検索
-      tags:
-        - music
-      parameters:
-        - in: query
-          name: q
-          schema:
-            type: string
-          required: true
-          description: 検索キーワード
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Music'
-        "400":
-          $ref: '#/components/responses/BadRequest'
-  /user/login:
-    # TODO: responsesで、Googleログインへの遷移URLを渡す
-    get:
-      summary: ユーザー（管理者 & MC）ログイン（新規作成も）
-      tags:
-        - user
-      parameters:
-        - in: query
-          name: redirect_url
-          schema:
-            type: string
-          required: true
-          description: ログイン成功時のリダイレクトURL
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  redirect_url:
-                    type: string
-                    description: Googleログインへの遷移URL
-        "400":
-          $ref: '#/components/responses/BadRequest'
-  /user/loggedInGoogle:
-    post:
-      summary: Googleログイン後に呼び出す。クエリなどをサーバー側に渡す。
-      tags:
-        - user
-      requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                code:
-                  type: string
-                  description: Googleから取得したユーザーを示すCode
-                redirect_url:
-                  type: string
-                  description: /user/loginで渡したredirect_urlと同じものを渡す（Google側での認証に必要なため）
+                url_name:
+                  $ref: "#/components/schemas/room_display_id"
+                room_name:
+                  $ref: "#/components/schemas/room_name"
+                description:
+                  $ref: "#/components/schemas/description"
       responses:
         "200":
-          description: Success
+          description: 更新後のRoom情報が返される
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  api_token:
-                    type: string
-                    description: APIトークン
+                $ref: '#/components/schemas/room'
         "400":
-          $ref: '#/components/responses/BadRequest'
-  /user/{userId}:
-    get:
-      summary: ユーザー（管理者 & MC）情報取得
-      tags:
-        - user
-      security:
-        - ApiToken: []
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+          $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
-          $ref: '#/components/responses/Unauthorized'
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          $ref: '#/components/responses/NotFound'
-    put:
-      summary: ユーザー（管理者 & MC）情報更新
-      tags:
-        - user
-      security:
-        - ApiToken: []
-      parameters:
-        - $ref: '#/components/parameters/UserId'
-      requestBody:
-        description: created_atとupdated_atは自動設定
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "404":
-          $ref: '#/components/responses/NotFound'
+          $ref: "#/components/responses/NotFound"
+        "500":
+          description: Roomの更新に失敗した
     delete:
-      summary: ユーザー（管理者 & MC）削除
+      summary: Room削除
       tags:
-        - user
+        - /mc/room
       security:
         - ApiToken: []
       parameters:
-        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/room_id'
       responses:
         "200":
-          $ref: '#/components/responses/Success'
+          $ref: '#/components/responses/OK'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /mc/room/{roomId}/letters:
+    get:
+      summary: Room内のお便り情報取得
+      tags:
+        - /mc/room
+      security:
+        - ApiToken: []
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LetterWithMusic'
         "401":
           $ref: '#/components/responses/Unauthorized'
         "404":
           $ref: '#/components/responses/NotFound'
-  /user/link/spotify:
-    get:
-      summary: Spotifyとの連携
+  /mc/room/{roomId}/letter/{letterId}:
+    delete:
+      summary: Room内のお便り削除
       tags:
-        - user
+        - /mc/room
       security:
         - ApiToken: []
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+        - $ref: '#/components/parameters/letter_id'
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /mc/room/{roomId}/musics:
+    get:
+      summary: Room内の音楽情報取得
+      tags:
+        - /mc/room
+      security:
+        - ApiToken: []
+      parameters:
+        - $ref: '#/components/parameters/room_id'
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MusicWithLetter'
         "401":
           $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /mc/room/{roomId}/music/{musicId}:
+    delete:
+      summary: 音楽削除
+      tags:
+        - /mc/room
+      security:
+        - ApiToken: []
+      parameters:
+        - $ref: '#/components/parameters/room_id'
+        - $ref: '#/components/parameters/music_id'
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: '#/components/responses/NotFound'
 
 components:
-  # Reusable schemas (data models)
+  parameters:
+    room_id:
+      name: roomId
+      in: path
+      description: Room表示ID
+      example: dj_event_a_22
+      required: true
+      schema:
+        type: string
+    letter_id:
+      name: letterId
+      in: path
+      description: お便りID
+      required: true
+      schema:
+        type: string
+    music_id:
+      name: musicId
+      in: path
+      description: 音楽ID
+      required: true
+      schema:
+        type: string
+    query:
+      in: query
+      name: q
+      description: 検索キーワード
+      example: ray
+      schema:
+        type: string
+      required: true
+    google_redirect_url:
+      in: query
+      name: redirect_url
+      schema:
+        type: string
+        format: url
+      required: true
+      example: http://localhost:3000/api/google/callback
+      description: ログイン成功時のリダイレクトURL
+    spotify_redirect_url:
+      in: query
+      name: redirect_url
+      schema:
+        type: string
+        format: url
+      required: true
+      example: http://localhost:3000/api/spotify/callback
+      description: ログイン成功時のリダイレクトURL
+
   schemas:
-    Music:
+    # OAuth
+    redirect_url:
+      type: string
+      format: url
+      description: リダイレクトURL
+    login_url:
+      type: string
+      format: url
+      description: ログイン用URL
+    code:
+      type: string
+      format: string
+      description: コールバックURLにパラメータとして含まれているコード（要URLデコード）
+    api_token:
+      type: string
+      format: string
+      description: APIトークン
+
+    # User
+    user:
       type: object
       properties:
         id:
-          type: string
-          description: 音楽サービスで発行されるID
-        artists:
-          type: array
-          description: アーティスト
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: アーティスト名
-              id:
-                type: string
-                description: 音楽サービスで発行されるアーティストID
-        album:
-          type: object
-          description: アルバム
-          properties:
-            name:
-              type: string
-              description: アルバム名
-            jacket_url:
-              type: string
-              description: アルバムのジャケット画像のURL
+          $ref: "#/components/schemas/user_id"
+        google_id:
+          $ref: "#/components/schemas/google_id"
+        email:
+          $ref: "#/components/schemas/email"
         name:
-          type: string
-          description: 曲名
-        duration:
-          type: integer
-          description: 曲の長さ（秒）
+          $ref: "#/components/schemas/name"
+        icon:
+          $ref: "#/components/schemas/icon"
+        is_admin:
+          $ref: "#/components/schemas/is_admin"
+        created_at:
+          $ref: "#/components/schemas/created_at"
+        updated_at:
+          $ref: "#/components/schemas/updated_at"
+        linked_providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/linked_provider"
       required:
         - id
-        - artists
-        - album
+        - google_id
+        - email
         - name
-        - duration
-    Room:
+        - icon
+        - is_admin
+        - created_at
+        - updated_at
+        - linked_provider
+
+    user_id:
+      type: number
+      format: number
+      description: UserID
+      example: 1
+    google_id:
+      type: string
+      format: string
+      description: GoogleUserID
+      example: "999999999999999999999"
+    email:
+      type: string
+      format: email
+      description: Eメールアドレス
+      example: mail@example.com
+    name:
+      type: string
+      format: string
+      description: ユーザー名
+      example: 来福 テク子
+    icon:
+      type: string
+      format: url
+      description: アイコンURL
+      example: https://github.com/lit-kansai.png
+    is_admin:
+      type: boolean
+      format: boolean
+      description: adminフラグ
+      example: true
+    linked_provider:
+      type: object
+      properties:
+        provider:
+          type: string
+          format: string
+          description: 音楽サービスの種類（"spotify" or "applemusic")
+        is_connected:
+          type: boolean
+          format: boolean
+          description: 連携されているかどうか
+      example:
+        provider: spotify
+        is_connected: true
+      required:
+        - provider
+        - is_connected
+
+    # Room
+    room:
       type: object
       properties:
         id:
-          type: integer
-          description: ルームID
-          example: 1
+          $ref: "#/components/schemas/room_id"
         owner_user_id:
-          type: integer
-          description: オーナーのユーザーID(プレイリストを紐づけている人)
-          example: 1
+          $ref: "#/components/schemas/owner_user_id"
         display_id:
-          type: string
-          description: URLで使用するID
-          example: dj_event_a_22
+          $ref: "#/components/schemas/room_display_id"
         name:
-          type: string
-          description: ルーム名
-          example: DJ EVENT A
+          $ref: "#/components/schemas/room_name"
         description:
-          type: string
-          description: ルームの説明
-          example: イベントA 22年
+          $ref: "#/components/schemas/description"
         playlist_id:
-          type: string
-          description: このルームに対応するproviderのプレイリストID
-          example: MGsb9KPq
+          $ref: "#/components/schemas/playlist_id"
         provider:
-          type: string
-          description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
-          example: spotify
+          $ref: "#/components/schemas/provider"
         created_at:
-          type: string
-          format: date
-          description: 作成日時
-          example: 2022-10-06T07:10:04.799Z
+          $ref: "#/components/schemas/created_at"
         updated_at:
-          type: string
-          format: date
-          description: 更新日時
-          example: 2022-10-06T07:10:04.799Z
-    RoomWithUser:
+          $ref: "#/components/schemas/updated_at"
+      required:
+        - id
+        - owner_user_id
+        - display_id
+        - name
+        - description
+        - created_at
+        - updated_at
+
+    DetailedRoom:
       type: object
       properties:
         id:
-          type: integer
-          description: ルームID
-          example: 1
+          $ref: "#/components/schemas/room_id"
         owner_user_id:
-          type: integer
-          description: オーナーのユーザーID(プレイリストを紐づけている人)
-          example: 1
+          $ref: "#/components/schemas/owner_user_id"
         display_id:
-          type: string
-          description: URLで使用するID
-          example: dj_event_a_22
+          $ref: "#/components/schemas/room_display_id"
         name:
-          type: string
-          description: ルーム名
-          example: DJ EVENT A
+          $ref: "#/components/schemas/room_name"
         description:
-          type: string
-          description: ルームの説明
-          example: イベントA 22年
+          $ref: "#/components/schemas/description"
         playlist_id:
-          type: string
-          description: このルームに対応するproviderのプレイリストID
-          example: MGsb9KPq
+          $ref: "#/components/schemas/playlist_id"
         provider:
-          type: string
-          description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
-          example: spotify
+          $ref: "#/components/schemas/provider"
         created_at:
-          type: string
-          format: date
-          description: 作成日時
-          example: 2022-10-06T07:10:04.799Z
+          $ref: "#/components/schemas/created_at"
         updated_at:
-          type: string
-          format: date
-          description: 更新日時
-          example: 2022-10-06T07:10:04.799Z
+          $ref: "#/components/schemas/updated_at"
         users:
           type: array
           items:
-            $ref: '#/components/schemas/User'
-    Letter:
-      type: object
-      properties:
-        radio_name:
-          type: string
-          description: ラジオネーム
-        message:
-          type: string
-          description: メッセージ
-    RequestMusic:
-      type: object
-      properties:
+            $ref: '#/components/schemas/user'
         musics:
           type: array
           items:
-            type: string
-            description: 音楽サービスで発行されるID
-        radio_name:
-          type: string
-          description: ラジオネーム
-        message:
-          type: string
-          description: メッセージ
+            $ref: '#/components/schemas/MusicWithLetter'
+        letters:
+          type: array
+          items:
+            $ref: '#/components/schemas/LetterWithMusic'
       required:
+        - id
+        - owner_user_id
+        - display_id
+        - name
+        - description
+        - created_at
+        - updated_at
+        - users
         - musics
-    User:
+        - letters
+
+    room_id:
+      type: number
+      format: number
+      description: RoomID
+    room_display_id:
+      type: string
+      example: dj_event_a_22
+      description: Room表示ID（URLのIDになる）
+    room_name:
+      type: string
+      example: DJ EVENT A
+      description: Room名（ページに表示される）
+    description:
+      type: string
+      example: イベントA 22年
+      description: Room概要（管理画面用のメモ）
+    provider:
+      type: string
+      example: spotify
+      description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
+    owner_user_id:
+      type: integer
+      description: オーナーのユーザーID(プレイリストを紐づけている人)
+      example: 1
+    playlist_id:
+      type: string
+      description: Roomに対応するproviderのプレイリストID
+      example: MGsb9KPq
+
+    # Letter
+    Letter:
+      type: object
+      description: お便り
+      properties:
+        id:
+          $ref: "#/components/schemas/letter_id"
+        room_id:
+          $ref: "#/components/schemas/room_id"
+        radio_name:
+          $ref: "#/components/schemas/radio_name"
+        message:
+          $ref: "#/components/schemas/message"
+        created_at:
+          $ref: "#/components/schemas/created_at"
+        updated_at:
+          $ref: "#/components/schemas/updated_at"
+      required:
+        - id
+        - room_id
+        - radio_name
+        - message
+        - created_at
+        - updated_at
+
+    letter_id:
+      type: string
+      description: お便りID
+    radio_name:
+      type: string
+      example: テク子
+      description: ラジオネーム
+    message:
+      type: string
+      example: 流れるの楽しみにしてます！
+      description: お便り本文
+
+    # Music
+    Music:
+      type: object
+      description: リクエストに保存される曲情報
+      properties:
+        id:
+          $ref: "#/components/schemas/music_id"
+        provided_music_id:
+          $ref: "#/components/schemas/provided_music_id"
+        letter_id:
+          $ref: "#/components/schemas/letter_id"
+        artists:
+          $ref: "#/components/schemas/artists"
+        album:
+          $ref: "#/components/schemas/album"
+        name:
+          $ref: "#/components/schemas/music_name"
+        thumbnail:
+          $ref: "#/components/schemas/thumbnail"
+        duration:
+          $ref: "#/components/schemas/duration"
+      required:
+        - id
+        - provided_music_id
+        - artists
+        - album
+        - name
+        - thumbnail
+        - duration
+        - created_at
+        - updated_at
+
+    music_id:
+      type: number
+      example: 1
+      description: MusicID
+    provided_music_id:
+      type: string
+      example: spotify:track:67T4aWFCAbMNWKamvI3piH
+      description: 音楽サービスの曲ID
+    artists:
+      type: string
+      example: BUMP OF CHICKEN, 初音ミク
+      description: アーティスト名
+    album:
+      type: string
+      example: ray
+      description: アルバム名
+    music_name:
+      type: string
+      example: ray
+      description: 曲名
+    thumbnail:
+      type: string
+      format: url
+      example: https://i.scdn.co/image/ab67616d0000b2731bc3a96706495fb0a1dbdffd
+      description: サムネイル画像URL
+    duration:
+      type: string
+      example: 300
+      description: 曲の長さ（秒）
+
+    LetterWithMusic:
       type: object
       properties:
         id:
-          type: integer
-          description: ユーザID
-          example: 1
-        google_id:
-          type: string
-          description: 連携しているGoogleアカウントのユーザID
-          example: CrgWK8HZ
-        is_admin:
-          type: boolean
-          description: 管理者かどうか
-          example: false
+          $ref: "#/components/schemas/letter_id"
+        room_id:
+          $ref: "#/components/schemas/room_id"
+        radio_name:
+          $ref: "#/components/schemas/radio_name"
+        message:
+          $ref: "#/components/schemas/message"
+        created_at:
+          $ref: "#/components/schemas/created_at"
+        updated_at:
+          $ref: "#/components/schemas/updated_at"
+        musics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Music'
+      required:
+        - id
+        - room_id
+        - radio_name
+        - message
+        - created_at
+        - updated_at
+        - musics
+
+    MusicWithLetter:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/music_id"
+        provided_music_id:
+          $ref: "#/components/schemas/provided_music_id"
+        letter_id:
+          $ref: "#/components/schemas/letter_id"
+        artists:
+          $ref: "#/components/schemas/artists"
+        album:
+          $ref: "#/components/schemas/album"
+        name:
+          $ref: "#/components/schemas/music_name"
+        thumbnail:
+          $ref: "#/components/schemas/thumbnail"
+        duration:
+          $ref: "#/components/schemas/duration"
+        letter:
+          $ref: '#/components/schemas/Letter'
+      required:
+        - id
+        - provided_music_id
+        - artists
+        - album
+        - name
+        - thumbnail
+        - duration
+        - created_at
+        - updated_at
+        - letter
+
+    # DB汎用
+    created_at:
+      type: string
+      format: date
+      description: 作成日時
+      example: "2022-10-06T07:10:04.799Z"
+    updated_at:
+      type: string
+      format: date
+      description: 更新日時
+      example: "2022-10-06T07:10:04.799Z"
+
     Error:
       type: object
       properties:
@@ -670,74 +914,29 @@ components:
         message:
           type: string
           description: エラーメッセージ
-      required:
-        - code
-        - message
-  # Reusable path, query, header and cookie parameters
-  parameters:
-    RoomId:
-      name: roomId
-      in: path
-      description: ルームのID（必ず1つのルームIDを送信する）
-      required: true
-      schema:
-        type: string
-    UserId:
-      name: userId
-      in: path
-      description: ユーザーのID（必ず1つのユーザーIDを送信する）
-      required: true
-      schema:
-        type: string
-  # Security scheme definitions (see Authentication)
+        
   securitySchemes:
     ApiToken:
       type: apiKey
       in: header
       name: api_token
       description: APIトークン
-  # Reusable request bodies
-  # requestBodies:
-  #   ...
-  # Reusable responses, such as 401 Unauthorized or 400 Bad Request
+
   responses:
-    Success:
-      description: Success
-    BadRequest:
-      description: Bad Request
+    OK:
+      description: 要求に成功した
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            BadRequest Error:
-              value:
-                code: "400"
-                message: "Error message"
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            Unauthorized Error:
-              value:
-                code: "401"
-                message: "Error message"
-    Forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            Forbidden Error:
-              value:
-                code: "403"
-                message: "Error message"
+            type: object
+            properties:
+              ok:
+                type: boolean
+                format: boolean
+                description: 成功したか
+                example: true
     NotFound:
-      description: Not Found
+      description: 対象が見つからなかった
       content:
         application/json:
           schema:
@@ -747,6 +946,50 @@ components:
               value:
                 code: "404"
                 message: "Error message"
+    Unauthorized:
+      description: 認証情報が正しくない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Unauthorized Error:
+              value:
+                code: "401"
+                message: "Error message"
+    ProviderIsNotLinked:
+      description: プロバイダが連携されていない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Unauthorized Error:
+              value:
+                code: "401"
+                message: "Error message"
+    BadRequest:
+      description: リクエストボディが正しくない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            BadRequest Error:
+              value:
+                code: "400"
+                message: "Error message"
+    BadRequestOrAlreadyExists:
+      description: リクエストボディが正しくない、もしくは指定したIDが既に存在している
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            BadRequestError:
+              value:
+                code: "400"
+                message: "Error message"
     InternalServerError:
       description: Internal Server Error
       content:
@@ -754,7 +997,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           examples:
-            NotFound Error:
+            InternalServerError:
               value:
                 code: "500"
                 message: "Error message"

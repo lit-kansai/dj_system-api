@@ -7,21 +7,17 @@ class RoomRouter < Base
 
   # ルーム情報取得
   get "/:room_id" do
-    room = Room.find_by(display_id: params[:room_id])
-    return not_found_error unless room
-    
-    send_json id: room["display_id"], name: room["name"], description: room["description"]
+    send_json id: @env["room"]["display_id"], name: @env["room"]["name"], description: @env["room"]["description"]
   end
 
   # 楽曲検索
   get "/:room_id/music/search" do
-    room = Room.find_by(display_id: params[:room_id])
-    return not_found_error unless room
+    return bad_request("invalid parameters") unless has_params?(params, [:q])
     
-    case room.provider
+    case @env["room"].provider
     when 'spotify'
       search_name = params[:q]
-      token = room.master.access_tokens.find_by(provider: 'spotify')
+      token = @env["room"].master.access_tokens.find_by(provider: 'spotify')
       return forbidden("provider is not linked") unless token
       spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
       music_list = spotify.search(search_name)
@@ -35,20 +31,17 @@ class RoomRouter < Base
   post "/:room_id/request" do
     return bad_request("invalid parameters") unless has_params?(params, [:musics])
 
-    room = Room.find_by(display_id: params[:room_id])
-    return not_found_error unless room
-
-    letter = room.letters.build(
+    letter = @env["room"].letters.build(
       radio_name: params[:radio_name] || "",
       message: params[:message] || "",
     )
     return internal_server_error("Failed to save") unless letter.save
 
     params[:musics].each do |music|
-      token = room.master.access_tokens.find_by(provider: room.provider)
+      token = @env["room"].master.access_tokens.find_by(provider: @env["room"].provider)
       next unless token
 
-      case room.provider
+      case @env["room"].provider
       when 'spotify'
         spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
         track = spotify.get_track(music)
@@ -62,7 +55,7 @@ class RoomRouter < Base
           duration: track[:duration],
         )
         m.save
-        spotify.add_track_to_playlist(room.playlist_id, music)
+        spotify.add_track_to_playlist(@env["room"].playlist_id, music)
       else
         forbidden("provider is not linked")
       end
