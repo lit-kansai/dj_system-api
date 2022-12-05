@@ -190,7 +190,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/user"
+                $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
     delete:
@@ -271,7 +271,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/room'
+                  $ref: '#/components/schemas/Room'
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -372,7 +372,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/room'
+                $ref: '#/components/schemas/Room'
         "400":
           $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
@@ -413,7 +413,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LetterWithMusic'
+                  $ref: '#/components/schemas/LetterWithMusics'
         "401":
           $ref: '#/components/responses/Unauthorized'
         "404":
@@ -527,26 +527,7 @@ components:
       description: ログイン成功時のリダイレクトURL
 
   schemas:
-    # OAuth
-    redirect_url:
-      type: string
-      format: url
-      description: リダイレクトURL
-    login_url:
-      type: string
-      format: url
-      description: ログイン用URL
-    code:
-      type: string
-      format: string
-      description: コールバックURLにパラメータとして含まれているコード（要URLデコード）
-    api_token:
-      type: string
-      format: string
-      description: APIトークン
-
-    # User
-    user:
+    User:
       type: object
       properties:
         id:
@@ -580,56 +561,7 @@ components:
         - updated_at
         - linked_provider
 
-    user_id:
-      type: number
-      format: number
-      description: UserID
-      example: 1
-    google_id:
-      type: string
-      format: string
-      description: GoogleUserID
-      example: "999999999999999999999"
-    email:
-      type: string
-      format: email
-      description: Eメールアドレス
-      example: mail@example.com
-    name:
-      type: string
-      format: string
-      description: ユーザー名
-      example: 来福 テク子
-    icon:
-      type: string
-      format: url
-      description: アイコンURL
-      example: https://github.com/lit-kansai.png
-    is_admin:
-      type: boolean
-      format: boolean
-      description: adminフラグ
-      example: true
-    linked_provider:
-      type: object
-      properties:
-        provider:
-          type: string
-          format: string
-          description: 音楽サービスの種類（"spotify" or "applemusic")
-        is_connected:
-          type: boolean
-          format: boolean
-          description: 連携されているかどうか
-      example:
-        provider: spotify
-        is_connected: true
-      required:
-        - provider
-        - is_connected
-
-    # Room
-    room:
+    Room:
       type: object
       properties:
         id:
@@ -683,7 +615,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/user'
+            $ref: '#/components/schemas/User'
         musics:
           type: array
           items:
@@ -691,7 +623,7 @@ components:
         letters:
           type: array
           items:
-            $ref: '#/components/schemas/LetterWithMusic'
+            $ref: '#/components/schemas/LetterWithMusics'
       required:
         - id
         - owner_user_id
@@ -704,36 +636,6 @@ components:
         - musics
         - letters
 
-    room_id:
-      type: number
-      format: number
-      description: RoomID
-    room_display_id:
-      type: string
-      example: dj_event_a_22
-      description: Room表示ID（URLのIDになる）
-    room_name:
-      type: string
-      example: DJ EVENT A
-      description: Room名（ページに表示される）
-    description:
-      type: string
-      example: イベントA 22年
-      description: Room概要（管理画面用のメモ）
-    provider:
-      type: string
-      example: spotify
-      description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
-    owner_user_id:
-      type: integer
-      description: オーナーのユーザーID(プレイリストを紐づけている人)
-      example: 1
-    playlist_id:
-      type: string
-      description: Roomに対応するproviderのプレイリストID
-      example: MGsb9KPq
-
-    # Letter
     Letter:
       type: object
       description: お便り
@@ -758,19 +660,6 @@ components:
         - created_at
         - updated_at
 
-    letter_id:
-      type: string
-      description: お便りID
-    radio_name:
-      type: string
-      example: テク子
-      description: ラジオネーム
-    message:
-      type: string
-      example: 流れるの楽しみにしてます！
-      description: お便り本文
-
-    # Music
     Music:
       type: object
       description: リクエストに保存される曲情報
@@ -802,37 +691,7 @@ components:
         - created_at
         - updated_at
 
-    music_id:
-      type: number
-      example: 1
-      description: MusicID
-    provided_music_id:
-      type: string
-      example: spotify:track:67T4aWFCAbMNWKamvI3piH
-      description: 音楽サービスの曲ID
-    artists:
-      type: string
-      example: BUMP OF CHICKEN, 初音ミク
-      description: アーティスト名
-    album:
-      type: string
-      example: ray
-      description: アルバム名
-    music_name:
-      type: string
-      example: ray
-      description: 曲名
-    thumbnail:
-      type: string
-      format: url
-      example: https://i.scdn.co/image/ab67616d0000b2731bc3a96706495fb0a1dbdffd
-      description: サムネイル画像URL
-    duration:
-      type: string
-      example: 300
-      description: 曲の長さ（秒）
-
-    LetterWithMusic:
+    LetterWithMusics:
       type: object
       properties:
         id:
@@ -892,6 +751,147 @@ components:
         - created_at
         - updated_at
         - letter
+
+    # OAuth
+    redirect_url:
+      type: string
+      format: url
+      description: リダイレクトURL
+    login_url:
+      type: string
+      format: url
+      description: ログイン用URL
+    code:
+      type: string
+      format: string
+      description: コールバックURLにパラメータとして含まれているコード（要URLデコード）
+    api_token:
+      type: string
+      format: string
+      description: APIトークン
+
+    # User
+    user_id:
+      type: number
+      format: number
+      description: UserID
+      example: 1
+    google_id:
+      type: string
+      format: string
+      description: GoogleUserID
+      example: "999999999999999999999"
+    email:
+      type: string
+      format: email
+      description: Eメールアドレス
+      example: mail@example.com
+    name:
+      type: string
+      format: string
+      description: ユーザー名
+      example: 来福 テク子
+    icon:
+      type: string
+      format: url
+      description: アイコンURL
+      example: https://github.com/lit-kansai.png
+    is_admin:
+      type: boolean
+      format: boolean
+      description: adminフラグ
+      example: true
+    linked_provider:
+      type: object
+      properties:
+        provider:
+          type: string
+          format: string
+          description: 音楽サービスの種類（"spotify" or "applemusic")
+        is_connected:
+          type: boolean
+          format: boolean
+          description: 連携されているかどうか
+      example:
+        provider: spotify
+        is_connected: true
+      required:
+        - provider
+        - is_connected
+
+    # Room
+    room_id:
+      type: number
+      format: number
+      description: RoomID
+    room_display_id:
+      type: string
+      example: dj_event_a_22
+      description: Room表示ID（URLのIDになる）
+    room_name:
+      type: string
+      example: DJ EVENT A
+      description: Room名（ページに表示される）
+    description:
+      type: string
+      example: イベントA 22年
+      description: Room概要（管理画面用のメモ）
+    provider:
+      type: string
+      example: spotify
+      description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
+    owner_user_id:
+      type: integer
+      description: オーナーのユーザーID(プレイリストを紐づけている人)
+      example: 1
+    playlist_id:
+      type: string
+      description: Roomに対応するproviderのプレイリストID
+      example: MGsb9KPq
+
+    # Letter
+    letter_id:
+      type: string
+      description: お便りID
+    radio_name:
+      type: string
+      example: テク子
+      description: ラジオネーム
+    message:
+      type: string
+      example: 流れるの楽しみにしてます！
+      description: お便り本文
+
+    # Music
+    music_id:
+      type: number
+      example: 1
+      description: MusicID
+    provided_music_id:
+      type: string
+      example: spotify:track:67T4aWFCAbMNWKamvI3piH
+      description: 音楽サービスの曲ID
+    artists:
+      type: string
+      example: BUMP OF CHICKEN, 初音ミク
+      description: アーティスト名
+    album:
+      type: string
+      example: ray
+      description: アルバム名
+    music_name:
+      type: string
+      example: ray
+      description: 曲名
+    thumbnail:
+      type: string
+      format: url
+      example: https://i.scdn.co/image/ab67616d0000b2731bc3a96706495fb0a1dbdffd
+      description: サムネイル画像URL
+    duration:
+      type: string
+      example: 300
+      description: 曲の長さ（秒）
 
     # DB汎用
     created_at:
