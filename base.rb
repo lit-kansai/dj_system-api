@@ -2,6 +2,7 @@ class Base < Sinatra::Base
   configure do
     set :protection, :except => [:json_csrf]
     use Rack::JSONBodyParser
+    set :public_folder, __dir__ + '/public'
   end
 
   configure :development do
