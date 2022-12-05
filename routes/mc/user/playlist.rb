@@ -9,8 +9,7 @@ class McUserPlaylistRouter < Base
     @env["user"].access_tokens.each do |access_token|
       case access_token.provider
       when 'spotify'
-        return forbidden("provider is not linked") unless @env["spotify"]
-        list.concat(@env["spotify"].get_playlists)
+        list.concat(@env["spotify"].get_playlists) if @env["spotify"]
       end
     end
     send_json list

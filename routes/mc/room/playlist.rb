@@ -29,6 +29,7 @@ class McRoomPlaylistRouter < Base
 
   # ルームプレイリスト - 楽曲削除
   delete "/music" do
+    # DELETEはbodyがparamsに入らないため、bodyを取得している
     body = JSON.parse(request.body.read)
     return bad_request("invalid parameters") unless has_params?(body, ["music_id"])
 
