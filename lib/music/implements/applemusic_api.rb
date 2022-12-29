@@ -90,8 +90,8 @@ module MusicApi
             end
             return nil unless res.status >= 200 && res.status < 300
             body = JSON.parse(res.body)
-            image_url = body['data'][0]['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000') if body['data'][0]['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000') != nil
             body["data"].map { |data|
+                image_url = data['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000') if body['data'][0]['attributes']['artwork'] != nil
                 {
                     id: data['id'],
                     name: data['attributes']['name'],
