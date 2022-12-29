@@ -58,6 +58,29 @@ module MusicApi
             }
         end
 
+        # プレイリスト一覧
+        def get_playlists()
+            # @id = self.me()['id'] unless @id
+            res = @apple_music_api.get 'me/library/playlists?extend'
+            if res.status == 401
+                refresh_access_token
+                res = @apple_music_api.get 'me/library/playlists?extend'
+            end
+            return nil unless res.status >= 200 && res.status < 300
+            body = JSON.parse(res.body)
+            body["data"].map { |data|
+                image_url = data['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000') if data['attributes']['artwork'] != nil
+                description = data['attributes']['description']['standard'] if data['attributes']['description'] != nil
+                {
+                    id: data['id'],
+                    name: data['attributes']['name'],
+                    description: description,
+                    image_url: image_url,
+                    provider: 'applemusic'
+                }
+            }
+        end
+
         # プレイリストの取得
         def get_playlist(playlist_id)
             res = @apple_music_api.get "me/library/playlists/#{playlist_id}"
