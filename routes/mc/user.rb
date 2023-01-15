@@ -13,10 +13,14 @@ class McUserRouter < Base
     google_user = @env["google"].profile
     providers = @env["user"].access_tokens.where.not(provider: "google")
     send_json(
+      id: @env["user"].id,
+      google_id: @env["user"].google_id,
       email: google_user["email"],
       name: google_user["name"],
       icon: google_user["picture"],
       is_admin: @env["user"].is_admin,
+      created_at: @env["user"].created_at,
+      updated_at: @env["user"].updated_at,
       linked_providers: SUPPORTED_PROVIDERS.map { |provider|
         {
           provider: provider,

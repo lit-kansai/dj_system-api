@@ -10,10 +10,10 @@ class McAuthRouter < Base
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
 
     google_token = Google.get_token_by_code(params['code'], params['redirect_url'])
-    return bad_request unless google_token['access_token']
+    return bad_request("invalid code or redirect_url") unless google_token['access_token']
 
     google_id = Google.new(google_token['access_token'], google_token['refresh_token']).profile['id']
-    return bad_request unless google_id
+    return internal_server_error unless google_id
 
     user = User.find_or_create_by(google_id: google_id)
     user.access_tokens.find_or_create_by(provider: 'google').update(access_token: google_token['access_token'], refresh_token: google_token['refresh_token'])
