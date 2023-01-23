@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(version: 2022_01_10_093226) do
     t.integer "user_id"
     t.string "provider"
     t.string "access_token"
+    t.string "music_user_token"
     t.string "refresh_token"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

@@ -26,6 +26,8 @@ class McRoomRouter < Base
     case params[:provider]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
     else
       return forbidden("provider is not linked")
     end
@@ -41,11 +43,18 @@ class McRoomRouter < Base
         res = @env["spotify"].get_playlist(params[:playlist_id])
         return not_found_error("playlist not found") unless res
         playlist_id = params[:playlist_id]
+      when 'applemusic'
+        res = @env["applemusic"].get_playlist(params[:playlist_id])
+        return not_found_error("playlist not found") unless res
+        playlist_id = params[:playlist_id]
       end
     else
       case params[:provider]
       when 'spotify'
         res = @env["spotify"].create_playlist(params[:room_name], params[:description])
+        playlist_id = res['id']
+      when 'applemusic'
+        res = @env["applemusic"].create_playlist(params[:room_name], params[:description])
         playlist_id = res['id']
       end
     end

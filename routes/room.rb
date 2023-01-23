@@ -22,6 +22,13 @@ class RoomRouter < Base
       spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
       music_list = spotify.search(search_name)
       send_json music_list
+    when 'applemusic'
+      search_name = params[:q]
+      token = @env["room"].master.access_tokens.find_by(provider: 'applemusic')
+      return forbidden("provider is not linked") unless token
+      spotify = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
+      music_list = spotify.search(search_name)
+      send_json music_list
     else
       forbidden("provider is not linked")
     end
@@ -56,6 +63,20 @@ class RoomRouter < Base
         )
         m.save
         spotify.add_track_to_playlist(@env["room"].playlist_id, music)
+      when 'applemusic'
+        applemusic = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
+        track = applemusic.get_track(music)
+        next unless track
+        m = letter.musics.build(
+          provided_music_id: track[:id],
+          name: track[:name],
+          artist: track[:artists],
+          album: track[:album],
+          thumbnail: track[:thumbnail],
+          duration: track[:duration],
+        )
+        m.save
+        applemusic.add_track_to_playlist(@env["room"].playlist_id, music)
       else
         forbidden("provider is not linked")
       end

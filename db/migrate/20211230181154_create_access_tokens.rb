@@ -4,6 +4,7 @@ class CreateAccessTokens < ActiveRecord::Migration[6.1]
       t.integer :user_id
       t.string :provider
       t.string :access_token
+      t.string :music_user_token
       t.string :refresh_token
       t.timestamps null: false
     end
