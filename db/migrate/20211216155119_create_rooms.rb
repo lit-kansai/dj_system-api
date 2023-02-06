@@ -8,7 +8,7 @@ class CreateRooms < ActiveRecord::Migration[6.1]
         t.string :type
         t.string :playlist_id
         t.string :provider
-	      t.integer :room_cooltime , default: 300
+        t.integer :room_cooltime , default: 300
         t.timestamps null: false
       end
   end
