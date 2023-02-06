@@ -86,6 +86,7 @@ class McRoomRouter < Base
     @env["room"].display_id = params[:url_name] if params.has_key?(:url_name)
     @env["room"].name = params[:room_name] if params.has_key?(:room_name)
     @env["room"].description = params[:description] if params.has_key?(:description)
+    @env["room"].room_cooltime = params[:room_cooltime] if params.has_key?(:room_cooltime)
     return internal_server_error("Failed to save") unless @env["room"].save
 
     send_json @env["room"].as_json()
