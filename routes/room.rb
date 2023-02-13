@@ -81,7 +81,8 @@ class RoomRouter < Base
         forbidden("provider is not linked")
       end
     end
-
+    cool_time = @env["room"].room_cooltime
+    response.headers["Retry-After"] = cool_time.to_s
     send_json(ok: true)
   end
 end

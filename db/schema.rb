@@ -60,6 +60,7 @@ ActiveRecord::Schema.define(version: 2022_01_10_093226) do
     t.string "type"
     t.string "playlist_id"
     t.string "provider"
+    t.integer "room_cooltime", default: 300
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
