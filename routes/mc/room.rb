@@ -110,6 +110,18 @@ class McRoomRouter < Base
     send_json @musics
   end
 
+  #人気top50を取得
+  get "/:room_id/music/top" do
+    case @env["room"].provider
+    when 'spotify'
+      return forbidden("provider is not linked") unless @env["spotify"]
+      res = @env["spotify"].get_playlist_tracks("37i9dQZEVXbKXQ4mDTEBXq")
+      send_json res
+    else
+      return not_found_error("playlist not found")
+    end
+  end
+
   # room内お便り削除
   delete "/:room_id/letter/:letter_id" do
     @letter = @env["room"].letters.order(created_at: "DESC").find_by(id: params[:letter_id])
