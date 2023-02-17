@@ -10,6 +10,8 @@ class McUserPlaylistRouter < Base
       case access_token.provider
       when 'spotify'
         list.concat(@env["spotify"].get_playlists) if @env["spotify"]
+      when 'applemusic'
+        list.concat(@env["applemusic"].get_playlists) if @env["applemusic"]
       end
     end
     send_json list
@@ -21,6 +23,9 @@ class McUserPlaylistRouter < Base
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       send_json @env["spotify"].get_playlists
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
+      send_json @env["applemusic"].get_playlists
     else
       return bad_request("unsupported provider")
     end
@@ -32,6 +37,11 @@ class McUserPlaylistRouter < Base
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       res = @env["spotify"].get_playlist_tracks(params[:playlist_id])
+      return not_found_error("playlist not found") unless res
+      return send_json res
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
+      res = @env["applemusic"].get_playlist_tracks(params[:playlist_id])
       return not_found_error("playlist not found") unless res
       return send_json res
     else
@@ -46,6 +56,10 @@ class McUserPlaylistRouter < Base
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       res = @env["spotify"].create_playlist(params[:name], params[:description])
+      return send_json(ok: true, id: res['id'])
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
+      res = @env["applemusic"].create_playlist(params[:name], params[:description])
       return send_json(ok: true, id: res['id'])
     else
       return bad_request("unsupported provider")

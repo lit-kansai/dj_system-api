@@ -26,6 +26,8 @@ class McRoomRouter < Base
     case params[:provider]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
     else
       return forbidden("provider is not linked")
     end
@@ -41,11 +43,18 @@ class McRoomRouter < Base
         res = @env["spotify"].get_playlist(params[:playlist_id])
         return not_found_error("playlist not found") unless res
         playlist_id = params[:playlist_id]
+      when 'applemusic'
+        res = @env["applemusic"].get_playlist(params[:playlist_id])
+        return not_found_error("playlist not found") unless res
+        playlist_id = params[:playlist_id]
       end
     else
       case params[:provider]
       when 'spotify'
         res = @env["spotify"].create_playlist(params[:room_name], params[:description])
+        playlist_id = res['id']
+      when 'applemusic'
+        res = @env["applemusic"].create_playlist(params[:room_name], params[:description])
         playlist_id = res['id']
       end
     end
@@ -77,6 +86,7 @@ class McRoomRouter < Base
     @env["room"].display_id = params[:url_name] if params.has_key?(:url_name)
     @env["room"].name = params[:room_name] if params.has_key?(:room_name)
     @env["room"].description = params[:description] if params.has_key?(:description)
+    @env["room"].room_cooltime = params[:room_cooltime] if params.has_key?(:room_cooltime)
     return internal_server_error("Failed to save") unless @env["room"].save
 
     send_json @env["room"].as_json()
@@ -98,6 +108,18 @@ class McRoomRouter < Base
   get "/:room_id/musics" do
     @musics = @env["room"].musics.order(created_at: "DESC").as_json(include: [:letter])
     send_json @musics
+  end
+
+  #人気top50を取得
+  get "/:room_id/music/top" do
+    case @env["room"].provider
+    when 'spotify'
+      return forbidden("provider is not linked") unless @env["spotify"]
+      res = @env["spotify"].get_playlist_tracks("37i9dQZEVXbKXQ4mDTEBXq")
+      send_json res
+    else
+      return not_found_error("playlist not found")
+    end
   end
 
   # room内お便り削除

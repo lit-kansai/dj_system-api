@@ -18,6 +18,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_01_10_093226) do
     t.integer "user_id"
     t.string "provider"
     t.string "access_token"
+    t.string "music_user_token"
     t.string "refresh_token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -58,8 +59,9 @@ ActiveRecord::Schema[7.0].define(version: 2022_01_10_093226) do
     t.string "type"
     t.string "playlist_id"
     t.string "provider"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.integer "room_cooltime", default: 300
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "users", force: :cascade do |t|

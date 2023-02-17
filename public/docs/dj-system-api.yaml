@@ -534,6 +534,32 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /mc/room/{roomId}/music/top:
+    get:
+      summary: 人気top50を取得
+      tags:
+        - /mc/room
+      parameters:
+        - $ref: "#/components/parameters/room_id"
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/UnsupportedProvider"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /mc/room/{roomId}/music/{musicId}:
     delete:
       summary: 音楽削除

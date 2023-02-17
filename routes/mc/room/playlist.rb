@@ -7,6 +7,11 @@ class McRoomPlaylistRouter < Base
       res = @env["spotify"].get_playlist_tracks(@env["room"].playlist_id)
       return not_found_error("playlist not found") unless res
       send_json res
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
+      res = @env["applemusic"].get_playlist_tracks(@env["room"].playlist_id)
+      return not_found_error("playlist not found") unless res
+      send_json res
     else
       return not_found_error("playlist not found")
     end
@@ -21,6 +26,10 @@ class McRoomPlaylistRouter < Base
       return forbidden("provider is not linked") unless @env["spotify"]
       res = @env["spotify"].add_track_to_playlist(@env["room"].playlist_id, params[:music_id])
       return not_found_error unless res
+      send_json(ok: true)
+    when 'applemusic'
+      return forbidden("provider is not linked") unless @env["applemusic"]
+      @env["applemusic"].add_track_to_playlist(@env["room"].playlist_id, params[:music_id])
       send_json(ok: true)
     else
       return not_found_error("playlist not found")

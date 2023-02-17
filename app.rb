@@ -36,6 +36,8 @@ class DjSystemApi < Base
             @env["google"] = Google.new(token.access_token, token.refresh_token)
           when 'spotify'
             @env["spotify"] = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
+          when 'applemusic'
+            @env["applemusic"] = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
           end
         end
       rescue => e
