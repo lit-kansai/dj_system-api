@@ -386,14 +386,26 @@ paths:
               schema:
                 type: object
                 properties:
-                  url_name:
+                  id:
+                    $ref: "#/components/schemas/room_id"
+                  owner_user_id:
+                    $ref: "#/components/schemas/owner_user_id"
+                  display_id:
                     $ref: "#/components/schemas/room_display_id"
-                  room_name:
+                  name:
                     $ref: "#/components/schemas/room_name"
                   description:
                     $ref: "#/components/schemas/description"
+                  playlist_id:
+                    $ref: "#/components/schemas/playlist_id"
                   provider:
                     $ref: "#/components/schemas/provider"
+                  room_cooltime:
+                    $ref: "#/components/schemas/room_cooltime"
+                  created_at:
+                    $ref: "#/components/schemas/created_at"
+                  updated_at:
+                    $ref: "#/components/schemas/updated_at"      
         "400":
           $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
@@ -443,6 +455,8 @@ paths:
                   $ref: "#/components/schemas/room_name"
                 description:
                   $ref: "#/components/schemas/description"
+                room_cooltime:
+                  $ref: "#/components/schemas/room_cooltime"
       responses:
         "200":
           description: 更新後のRoom情報が返される
@@ -782,6 +796,8 @@ components:
           $ref: "#/components/schemas/playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
+        room_cooltime:
+          $ref: "#/components/schemas/room_cooltime"
         created_at:
           $ref: "#/components/schemas/created_at"
         updated_at:
@@ -792,6 +808,7 @@ components:
         - display_id
         - name
         - description
+        - room_cooltime
         - created_at
         - updated_at
 
@@ -812,6 +829,8 @@ components:
           $ref: "#/components/schemas/playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
+        room_cooltime:
+          $ref: "#/components/schemas/room_cooltime"
         created_at:
           $ref: "#/components/schemas/created_at"
         updated_at:
@@ -834,6 +853,7 @@ components:
         - display_id
         - name
         - description
+        - room_cooltime
         - created_at
         - updated_at
         - users
@@ -1092,6 +1112,10 @@ components:
       type: integer
       description: オーナーのユーザーID(プレイリストを紐づけている人)
       example: 1
+    room_cooltime:
+      type: integer
+      example: 300
+      description: ユーザーがリクエストを投稿後、再度リクエスト出来るまでの時間
 
     # Letter
     letter_id:
