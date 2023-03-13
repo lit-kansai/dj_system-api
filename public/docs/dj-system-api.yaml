@@ -42,6 +42,30 @@ paths:
                     $ref: "#/components/schemas/description"
         "404":
           $ref: "#/components/responses/NotFound"
+  /room/{roomId}/music/top:
+    get:
+      summary: 人気top50を取得
+      tags:
+        - /room
+      parameters:
+        - $ref: "#/components/parameters/room_id"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/UnsupportedProvider"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /room/{roomId}/music/search:
     get:
       summary: 音楽検索
@@ -592,32 +616,6 @@ paths:
                   $ref: "#/components/schemas/MusicWithLetter"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/music/top:
-    get:
-      summary: 人気top50を取得
-      tags:
-        - /mc/room
-      parameters:
-        - $ref: "#/components/parameters/room_id"
-      security:
-        - ApiToken: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Track"
-        "400":
-          $ref: "#/components/responses/UnsupportedProvider"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
   /mc/room/{roomId}/music/{musicId}:

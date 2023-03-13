@@ -10,6 +10,20 @@ class RoomRouter < Base
     send_json id: @env["room"]["display_id"], name: @env["room"]["name"], description: @env["room"]["description"]
   end
 
+  #人気top50を取得
+  get "/:room_id/music/top" do
+    case @env["room"].provider
+    when 'spotify'
+      token = @env["room"].master.access_tokens.find_by(provider: 'spotify')
+      return forbidden("provider is not linked") unless token
+      spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
+      res = spotify.get_playlist_tracks("37i9dQZEVXbKXQ4mDTEBXq")
+      send_json res
+    else
+      return not_found_error("playlist not found")
+    end
+  end
+
   # 楽曲検索
   get "/:room_id/music/search" do
     return bad_request("invalid parameters") unless has_params?(params, [:q])
