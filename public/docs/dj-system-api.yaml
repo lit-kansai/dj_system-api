@@ -42,6 +42,30 @@ paths:
                     $ref: "#/components/schemas/description"
         "404":
           $ref: "#/components/responses/NotFound"
+  /room/{roomId}/music/top:
+    get:
+      summary: 人気top50を取得
+      tags:
+        - /room
+      parameters:
+        - $ref: "#/components/parameters/room_id"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/UnsupportedProvider"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /room/{roomId}/music/search:
     get:
       summary: 音楽検索
@@ -209,6 +233,56 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /mc/user/link/applemusic:
+    get:
+      summary: Step.1 applemusic連携ログイン用URLの発行
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect_url:
+                    $ref: "#/components/schemas/login_url"
+                required:
+                  - redirect_url
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /mc/user/link/applemusic/callback:
+    post:
+      summary: Step.2 applemusic連携ログイン用Callback
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                redirect_url:
+                  $ref: "#/components/schemas/redirect_url"
+                code:
+                  $ref: "#/components/schemas/code"
+              required:
+                - redirect_url
+                - code
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/user/link/spotify/callback:
     post:
       summary: Step.2 Spotify連携ログイン用Callback
@@ -546,32 +620,6 @@ paths:
                   $ref: "#/components/schemas/MusicWithLetter"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/music/top:
-    get:
-      summary: 人気top50を取得
-      tags:
-        - /mc/room
-      parameters:
-        - $ref: "#/components/parameters/room_id"
-      security:
-        - ApiToken: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Track"
-        "400":
-          $ref: "#/components/responses/UnsupportedProvider"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
   /mc/room/{roomId}/music/{musicId}:
