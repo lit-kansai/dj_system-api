@@ -236,6 +236,52 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /mc/user/link/applemusic:
+    get:
+      summary: Step.1 AppleMusic連携ログイン用URLの発行
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    $ref: "#/components/schemas/access_token"
+                required:
+                  - access_token
+  /mc/user/link/applemusic/callback:
+    post:
+      summary: Step.2 AppleMusic連携ログイン用Callback
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                music_user_token:
+                  $ref: "#/components/schemas/music_user_token"
+                access_token:
+                  $ref: "#/components/schemas/access_token"
+              required:
+                - music_user_token
+                - access_token
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/user/playlist:
     get:
       summary: 連携している音楽サービスのプレイリスト一覧を取得
@@ -1037,6 +1083,14 @@ components:
       type: string
       format: string
       description: APIトークン
+    music_user_token:
+      type: string
+      format: string
+      description: MusicUserトークン
+    access_token:
+      type: string
+      format: string
+      description: AppleMusicのアクセストークン
 
     # User
     user_id:
