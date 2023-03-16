@@ -7,7 +7,7 @@ class RoomRouter < Base
 
   # ルーム情報取得
   get "/:room_id" do
-    send_json id: @env["room"]["display_id"], name: @env["room"]["name"], description: @env["room"]["description"]
+    send_json id: @env["room"]["display_id"], name: @env["room"]["name"], description: @env["room"]["description"],room_cooltime: @env["room"]["room_cooltime"]
   end
 
   #人気top50を取得

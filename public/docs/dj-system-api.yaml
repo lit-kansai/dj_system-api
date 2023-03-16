@@ -40,6 +40,8 @@ paths:
                     $ref: "#/components/schemas/room_name"
                   description:
                     $ref: "#/components/schemas/description"
+                  room_cooltime:
+                    $ref: "#/components/schemas/room_cooltime"
         "404":
           $ref: "#/components/responses/NotFound"
   /room/{roomId}/music/top:
