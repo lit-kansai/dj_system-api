@@ -52,7 +52,7 @@ module MusicApi
               id: track['id'],
               artists: track['attributes']['artistName'],
               album: track['attributes']['albumName'],
-              thumbnail: track['attributes']['artwork']['url'],
+              thumbnail: track['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000'),
               name: track['attributes']['name'],
               duration: (track['attributes']['durationInMillis'] / 1000).ceil,
             }
@@ -116,7 +116,7 @@ module MusicApi
                 id: item['id'],
                 artists: item['attributes']['artistName'],
                 album: item['attributes']['albumName'],
-                thumbnail: item['attributes']['artwork']['url'],
+                thumbnail: item['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000'),
                 name: item['attributes']['name'],
                 duration: (item['attributes']['durationInMillis'] / 1000).ceil,
               }
