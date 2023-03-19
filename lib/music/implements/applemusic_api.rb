@@ -152,7 +152,7 @@ module MusicApi
                  ]
             }
             playlist_tracks = get_playlist_tracks(playlist_id)
-            unless playlist_tracks.all? {|t| t[:id] != track_id }
+            unless playlist_tracks == nil || playlist_tracks.all? {|t| t[:id] != track_id }
                 return nil
             end
             res = @apple_music_api.post "me/library/playlists/#{playlist_id}/tracks", JSON.generate(data)
