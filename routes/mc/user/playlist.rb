@@ -60,7 +60,7 @@ class McUserPlaylistRouter < Base
     when 'applemusic'
       return forbidden("provider is not linked") unless @env["applemusic"]
       res = @env["applemusic"].create_playlist(params[:name], params[:description])
-      return send_json(ok: true, id: res['id'])
+      return send_json(ok: true, id: res["data"][0]["id"])
     else
       return bad_request("unsupported provider")
     end
