@@ -46,11 +46,12 @@ paths:
           $ref: "#/components/responses/NotFound"
   /room/{roomId}/music/top:
     get:
-      summary: 人気top50を取得
+      summary: 人気曲リストを取得
       tags:
         - /room
       parameters:
         - $ref: "#/components/parameters/room_id"
+        - $ref: "#/components/parameters/limit"
       responses:
         "200":
           description: Success
@@ -102,18 +103,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                musics:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/provided_music_id"
-                radio_name:
-                  $ref: "#/components/schemas/radio_name"
-                message:
-                  $ref: "#/components/schemas/message"
-              required:
-                - musics
+              oneOf:
+                - $ref: "#/components/schemas/spotify_request"
+                - $ref: "#/components/schemas/applemusic_request"
+            examples:
+                response1:
+                  summary: Spotify
+                  value:
+                    musics: ["spotify:track:67T4aWFCAbMNWKamvI3piH"]
+                    radio_name: "テク子"
+                    message: "流れるの楽しみにしてます！"
+                response2:
+                  summary: AppleMusic
+                  value:
+                    musics: ["1464635122"]
+                    radio_name: "テク子"
+                    message: "流れるの楽しみにしてます！"
       responses:
         "200":
           $ref: "#/components/responses/OK"
@@ -755,6 +760,14 @@ components:
       schema:
         type: string
       required: true
+    limit:
+      in: query
+      name: limit
+      description: 返ってくる曲数(max50)
+      example: 12
+      schema:
+        type: string
+      required: true
     google_redirect_url:
       in: query
       name: redirect_url
@@ -1066,6 +1079,33 @@ components:
         - description
         - provider
 
+    spotify_request:
+      type: object
+      properties:
+        musics:
+          type: array
+          items:
+            $ref: "#/components/schemas/provided_music_id"
+        radio_name:
+          $ref: "#/components/schemas/radio_name"
+        message:
+          $ref: "#/components/schemas/message"
+      required:
+        - musics
+    applemusic_request:
+      type: object
+      properties:
+        musics:
+          type: array
+          items:
+            $ref: "#/components/schemas/provided_applemusic_id"
+        radio_name:
+          $ref: "#/components/schemas/radio_name"
+        message:
+          $ref: "#/components/schemas/message"
+      required:
+        - musics
+
     # OAuth
     redirect_url:
       type: string
@@ -1192,6 +1232,10 @@ components:
     provided_music_id:
       type: string
       example: spotify:track:67T4aWFCAbMNWKamvI3piH
+      description: 音楽サービスの曲ID
+    provided_applemusic_id:
+      type: string
+      example: "1464635122"
       description: 音楽サービスの曲ID
     artists:
       type: string
