@@ -15,4 +15,17 @@ class McUserLinkRouter < Base
     @env["user"].access_tokens.find_or_create_by(provider: 'spotify').update(access_token: spotify_token['access_token'], refresh_token: spotify_token['refresh_token'])
     send_json(ok: true)
   end
+
+  # Apple Musicとの連携
+  get "/applemusic" do
+    access_token = MusicApi::AppleMusicApi.generate_access_token()
+    send_json(access_token: access_token)
+  end
+
+  # Apple Music連携後のリダイレクト先
+  post "/applemusic/callback" do
+    return bad_request("invalid parameters") unless has_params?(params, [:access_token, :music_user_token])
+    @env["user"].access_tokens.find_or_create_by(provider: 'applemusic').update(access_token: params['access_token'], music_user_token: params['music_user_token'])
+    send_json(ok: true)
+  end
 end

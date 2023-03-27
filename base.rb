@@ -1,8 +1,10 @@
 class Base < Sinatra::Base
+  helpers Sinatra::Cookies
+  
   configure do
     set :protection, :except => [:json_csrf]
-    use Rack::JSONBodyParser
     set :public_folder, __dir__ + '/public'
+    use Rack::JSONBodyParser
   end
 
   configure :development do

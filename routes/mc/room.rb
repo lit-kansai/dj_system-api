@@ -110,6 +110,8 @@ class McRoomRouter < Base
     send_json @musics
   end
 
+
+
   # room内お便り削除
   delete "/:room_id/letter/:letter_id" do
     @letter = @env["room"].letters.order(created_at: "DESC").find_by(id: params[:letter_id])

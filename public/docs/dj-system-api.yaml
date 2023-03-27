@@ -40,6 +40,32 @@ paths:
                     $ref: "#/components/schemas/room_name"
                   description:
                     $ref: "#/components/schemas/description"
+                  room_cooltime:
+                    $ref: "#/components/schemas/room_cooltime"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /room/{roomId}/music/top:
+    get:
+      summary: 人気top50を取得
+      tags:
+        - /room
+      parameters:
+        - $ref: "#/components/parameters/room_id"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/UnsupportedProvider"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
   /room/{roomId}/music/search:
@@ -236,6 +262,52 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /mc/user/link/applemusic:
+    get:
+      summary: Step.1 AppleMusic連携ログイン用URLの発行
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    $ref: "#/components/schemas/access_token"
+                required:
+                  - access_token
+  /mc/user/link/applemusic/callback:
+    post:
+      summary: Step.2 AppleMusic連携ログイン用Callback
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                music_user_token:
+                  $ref: "#/components/schemas/music_user_token"
+                access_token:
+                  $ref: "#/components/schemas/access_token"
+              required:
+                - music_user_token
+                - access_token
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/user/playlist:
     get:
       summary: 連携している音楽サービスのプレイリスト一覧を取得
@@ -386,14 +458,26 @@ paths:
               schema:
                 type: object
                 properties:
-                  url_name:
+                  id:
+                    $ref: "#/components/schemas/room_id"
+                  owner_user_id:
+                    $ref: "#/components/schemas/owner_user_id"
+                  display_id:
                     $ref: "#/components/schemas/room_display_id"
-                  room_name:
+                  name:
                     $ref: "#/components/schemas/room_name"
                   description:
                     $ref: "#/components/schemas/description"
+                  playlist_id:
+                    $ref: "#/components/schemas/playlist_id"
                   provider:
                     $ref: "#/components/schemas/provider"
+                  room_cooltime:
+                    $ref: "#/components/schemas/room_cooltime"
+                  created_at:
+                    $ref: "#/components/schemas/created_at"
+                  updated_at:
+                    $ref: "#/components/schemas/updated_at"      
         "400":
           $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
@@ -443,6 +527,8 @@ paths:
                   $ref: "#/components/schemas/room_name"
                 description:
                   $ref: "#/components/schemas/description"
+                room_cooltime:
+                  $ref: "#/components/schemas/room_cooltime"
       responses:
         "200":
           description: 更新後のRoom情報が返される
@@ -756,6 +842,8 @@ components:
           $ref: "#/components/schemas/playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
+        room_cooltime:
+          $ref: "#/components/schemas/room_cooltime"
         created_at:
           $ref: "#/components/schemas/created_at"
         updated_at:
@@ -766,6 +854,7 @@ components:
         - display_id
         - name
         - description
+        - room_cooltime
         - created_at
         - updated_at
 
@@ -786,6 +875,8 @@ components:
           $ref: "#/components/schemas/playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
+        room_cooltime:
+          $ref: "#/components/schemas/room_cooltime"
         created_at:
           $ref: "#/components/schemas/created_at"
         updated_at:
@@ -808,6 +899,7 @@ components:
         - display_id
         - name
         - description
+        - room_cooltime
         - created_at
         - updated_at
         - users
@@ -991,6 +1083,14 @@ components:
       type: string
       format: string
       description: APIトークン
+    music_user_token:
+      type: string
+      format: string
+      description: MusicUserトークン
+    access_token:
+      type: string
+      format: string
+      description: AppleMusicのアクセストークン
 
     # User
     user_id:
@@ -1066,6 +1166,10 @@ components:
       type: integer
       description: オーナーのユーザーID(プレイリストを紐づけている人)
       example: 1
+    room_cooltime:
+      type: integer
+      example: 300
+      description: ユーザーがリクエストを投稿後、再度リクエスト出来るまでの時間
 
     # Letter
     letter_id:
