@@ -2,7 +2,7 @@
 <img alt="DJ-Gassi_logo2" height="300" src="https://user-images.githubusercontent.com/57238213/229261614-2f85aa48-650d-48c8-808d-ee8990cfcb0b.png"><br />
 </div>
 
-# DJ System Front
+# DJ System API
 
 DJ SystemのAPIです。
 
