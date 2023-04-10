@@ -63,7 +63,7 @@ module MusicApi
             # @id = self.me()['id'] unless @id
             res = @apple_music_api.get 'me/library/playlists?extend'
             if res.status == 401
-                refresh_access_token
+                regenerate_access_token
                 res = @apple_music_api.get 'me/library/playlists?extend'
             end
             return nil unless res.status >= 200 && res.status < 300
