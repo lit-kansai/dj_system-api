@@ -123,6 +123,27 @@ module MusicApi
             }
         end
 
+        #人気曲の取得
+        def get_top_music(playlist_id,limit_tracks)
+            res = @apple_music_api.get "catalog/jp/playlists/#{playlist_id}/tracks?limit=#{limit_tracks}"
+            if res.status == 401
+                regenerate_access_token
+                res = @apple_music_api.get "catalog/jp/playlists/#{playlist_id}/tracks?limit=#{limit_tracks}"
+            end
+            body = JSON.parse(res.body)
+            return nil unless res.status >= 200 && res.status < 300
+            body['data'].map { |item|
+                {
+                  id: item['id'],
+                  artists: item['attributes']['artistName'],
+                  album: item['attributes']['albumName'],
+                  thumbnail: item['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000'),
+                  name: item['attributes']['name'],
+                  duration: (item['attributes']['durationInMillis'] / 1000).ceil,
+                }
+            }
+        end
+
         # プレイリストの作成
         def create_playlist(name, description)
             # id = me()["id"]

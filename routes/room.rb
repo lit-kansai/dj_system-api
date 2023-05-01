@@ -12,15 +12,26 @@ class RoomRouter < Base
 
   #人気topリストを取得
   get "/:room_id/music/top" do
-    return bad_request("invalid parameters") unless has_params?(params, [:limit])
+    #return bad_request("invalid parameters") unless has_params?(params, [:limit])
+
+    if params[:limit].nil?
+      limit_tracks = '12'
+    else
+      limit_tracks = params[:limit]
+    end
 
     case @env["room"].provider
     when 'spotify'
-      limit_track = params[:limit]
       token = @env["room"].master.access_tokens.find_by(provider: 'spotify')
       return forbidden("provider is not linked") unless token
       spotify = MusicApi::SpotifyApi.new(token.access_token, token.refresh_token)
-      res = spotify.get_top_music("37i9dQZEVXbKXQ4mDTEBXq",limit_track)
+      res = spotify.get_top_music("37i9dQZEVXbKXQ4mDTEBXq",limit_tracks)
+      send_json res
+    when 'applemusic'
+      token = @env["room"].master.access_tokens.find_by(provider: 'applemusic')
+      return forbidden("provider is not linked") unless token
+      applemusic = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
+      res = applemusic.get_top_music("pl.043a2c9876114d95a4659988497567be",limit_tracks)
       send_json res
     else
       return not_found_error("playlist not found")
@@ -43,8 +54,8 @@ class RoomRouter < Base
       search_name = params[:q]
       token = @env["room"].master.access_tokens.find_by(provider: 'applemusic')
       return forbidden("provider is not linked") unless token
-      spotify = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
-      music_list = spotify.search(search_name)
+      applemusic = MusicApi::AppleMusicApi.new(token.access_token, token.music_user_token)
+      music_list = applemusic.search(search_name)
       send_json music_list
     else
       forbidden("provider is not linked")
