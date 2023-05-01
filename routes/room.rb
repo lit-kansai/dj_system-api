@@ -12,8 +12,6 @@ class RoomRouter < Base
 
   #人気topリストを取得
   get "/:room_id/music/top" do
-    #return bad_request("invalid parameters") unless has_params?(params, [:limit])
-
     if params[:limit].nil?
       limit_tracks = '12'
     else
