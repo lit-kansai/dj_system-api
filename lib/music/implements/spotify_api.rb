@@ -127,11 +127,11 @@ module MusicApi
       }
     end
 
-    def get_top12(playlist_id)
-      res = @spotify_api.get "playlists/#{playlist_id}/tracks?limit=12"
+    def get_top_music(playlist_id,limit_track)
+      res = @spotify_api.get "playlists/#{playlist_id}/tracks?limit=#{limit_track}"
       if res.status == 401
         refresh_access_token
-        res = @spotify_api.get "playlists/#{playlist_id}/tracks?limit=12"
+        res = @spotify_api.get "playlists/#{playlist_id}/tracks?limit=#{limit_track}"
       end
       body = JSON.parse(res.body)
       return nil unless res.status >= 200 && res.status < 300
