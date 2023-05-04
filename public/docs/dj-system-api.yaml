@@ -19,13 +19,13 @@ tags:
   - name: /mc/room
     description: Roomの管理
 paths:
-  /room/{room_display_id}:
+  /room/{room_id}:
     get:
       summary: Room情報表示
       tags:
         - /room
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
           description: Roomの情報が返される
@@ -44,13 +44,13 @@ paths:
                     $ref: "#/components/schemas/room_cooltime"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{room_display_id}/music/top:
+  /room/{room_id}/music/top:
     get:
       summary: 人気曲リストを取得
       tags:
         - /room
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
         - $ref: "#/components/parameters/limit"
       responses:
         "200":
@@ -69,13 +69,13 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{room_display_id}/music/search:
+  /room/{room_id}/music/search:
     get:
       summary: 音楽検索
       tags:
         - /room
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
         - $ref: "#/components/parameters/query"
       responses:
         "200":
@@ -92,13 +92,13 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{room_display_id}/request:
+  /room/{room_id}/request:
     post:
       summary: リクエスト送信
       tags:
         - /room
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       requestBody:
         content:
           application/json:
@@ -360,7 +360,7 @@ paths:
       tags:
         - /mc/user
       parameters:
-        - $ref: "#/components/parameters/provider"
+        - $ref: "#/components/parameters/provider_name"
       security:
         - ApiToken: []
       requestBody:
@@ -491,7 +491,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "500":
           description: Roomの作成に失敗した
-  /mc/room/{room_display_id}:
+  /mc/room/{room_id}:
     get:
       summary: Room情報表示
       tags:
@@ -499,7 +499,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
           description: Roomの詳細情報が返される
@@ -518,7 +518,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       requestBody:
         description: created_atとupdated_atは自動設定
         content:
@@ -556,7 +556,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
           $ref: "#/components/responses/OK"
@@ -564,7 +564,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/letters:
+  /mc/room/{room_id}/letters:
     get:
       summary: Room内のお便り情報取得
       tags:
@@ -572,7 +572,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
           description: Success
@@ -586,7 +586,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/letter/{letterId}:
+  /mc/room/{room_id}/letter/{letterId}:
     delete:
       summary: Room内のお便り削除
       tags:
@@ -594,7 +594,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
         - $ref: "#/components/parameters/letter_id"
       responses:
         "200":
@@ -603,7 +603,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/musics:
+  /mc/room/{room_id}/musics:
     get:
       summary: Room内の音楽情報取得
       tags:
@@ -611,7 +611,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       responses:
         "200":
           description: Success
@@ -625,7 +625,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/music/{musicId}:
+  /mc/room/{room_id}/music/{musicId}:
     delete:
       summary: 音楽削除
       tags:
@@ -633,7 +633,7 @@ paths:
       security:
         - ApiToken: []
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
         - $ref: "#/components/parameters/music_id"
       responses:
         "200":
@@ -642,13 +642,13 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/playlist:
+  /mc/room/{room_id}/playlist:
     get:
       summary: ルームに連携されているプレイリストの楽曲一覧を取得
       tags:
         - /mc/room
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       security:
         - ApiToken: []
       responses:
@@ -668,7 +668,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{room_display_id}/playlist/music:
+  /mc/room/{room_id}/playlist/music:
     post:
       summary: ルームに連携されているプレイリストに楽曲を追加
       tags:
@@ -684,7 +684,7 @@ paths:
               required:
                 - music_id
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       security:
         - ApiToken: []
       responses:
@@ -713,7 +713,7 @@ paths:
               required:
                 - music_id
       parameters:
-        - $ref: "#/components/parameters/room_display_id"
+        - $ref: "#/components/parameters/room_id"
       security:
         - ApiToken: []
       responses:
@@ -730,8 +730,8 @@ paths:
 
 components:
   parameters:
-    room_display_id:
-      name: room_display_id
+    room_id:
+      name: room_id
       in: path
       description: Room表示ID
       example: dj_event_a_22
@@ -1264,16 +1264,16 @@ components:
       type: string
       description: 音楽サービスのプレイリストID
       example: MGsb9KPq
-    provider_provider_playlist_name:
+    provider_playlist_name:
       type: string
       description: プレイリスト名
       example: DJ EVENT A
-    provider_provider_playlist_thumbnail:
+    provider_playlist_thumbnail:
       type: string
       format: url
       description: プレイリストのサムネイル画像URL
       example: DJ EVENT A
-    provider_provider_playlist_description:
+    provider_playlist_description:
       type: string
       description: プレイリスト概要
       example: イベントA 22年 - Generated by DJ Gassi
