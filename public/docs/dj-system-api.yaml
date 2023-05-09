@@ -19,7 +19,7 @@ tags:
   - name: /mc/room
     description: Roomの管理
 paths:
-  /room/{roomId}:
+  /room/{room_id}:
     get:
       summary: Room情報表示
       tags:
@@ -44,7 +44,7 @@ paths:
                     $ref: "#/components/schemas/room_cooltime"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{roomId}/music/top:
+  /room/{room_id}/music/top:
     get:
       summary: 人気曲リストを取得
       tags:
@@ -69,7 +69,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{roomId}/music/search:
+  /room/{room_id}/music/search:
     get:
       summary: 音楽検索
       tags:
@@ -92,7 +92,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /room/{roomId}/request:
+  /room/{room_id}/request:
     post:
       summary: リクエスト送信
       tags:
@@ -107,18 +107,18 @@ paths:
                 - $ref: "#/components/schemas/spotify_request"
                 - $ref: "#/components/schemas/applemusic_request"
             examples:
-                response1:
-                  summary: Spotify
-                  value:
-                    musics: ["spotify:track:67T4aWFCAbMNWKamvI3piH"]
-                    radio_name: "テク子"
-                    message: "流れるの楽しみにしてます！"
-                response2:
-                  summary: AppleMusic
-                  value:
-                    musics: ["1464635122"]
-                    radio_name: "テク子"
-                    message: "流れるの楽しみにしてます！"
+              response1:
+                summary: Spotify
+                value:
+                  musics: ["spotify:track:67T4aWFCAbMNWKamvI3piH"]
+                  radio_name: "テク子"
+                  message: "流れるの楽しみにしてます！"
+              response2:
+                summary: AppleMusic
+                value:
+                  musics: ["1464635122"]
+                  radio_name: "テク子"
+                  message: "流れるの楽しみにしてます！"
       responses:
         "200":
           $ref: "#/components/responses/OK"
@@ -331,13 +331,13 @@ paths:
                   $ref: "#/components/schemas/Playlist"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /mc/user/playlist/{provider}:
+  /mc/user/playlist/{provider_name}:
     get:
       summary: 指定した音楽サービスのプレイリスト一覧を取得
       tags:
         - /mc/user
       parameters:
-        - $ref: "#/components/parameters/provider"
+        - $ref: "#/components/parameters/provider_name"
       security:
         - ApiToken: []
       responses:
@@ -360,7 +360,7 @@ paths:
       tags:
         - /mc/user
       parameters:
-        - $ref: "#/components/parameters/provider"
+        - $ref: "#/components/parameters/provider_name"
       security:
         - ApiToken: []
       requestBody:
@@ -370,9 +370,9 @@ paths:
               type: object
               properties:
                 name:
-                  $ref: "#/components/schemas/playlist_name"
+                  $ref: "#/components/schemas/provider_playlist_name"
                 description:
-                  $ref: "#/components/schemas/playlist_description"
+                  $ref: "#/components/schemas/provider_playlist_description"
               required:
                 - name
                 - description
@@ -385,13 +385,13 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/ProviderIsNotLinked"
-  /mc/user/playlist/{provider}/{playlist_id}:
+  /mc/user/playlist/{provider_name}/{playlist_id}:
     get:
       summary: 指定したプレイリストの楽曲一覧を取得
       tags:
         - /mc/user
       parameters:
-        - $ref: "#/components/parameters/provider"
+        - $ref: "#/components/parameters/provider_name"
         - $ref: "#/components/parameters/playlist_id"
       security:
         - ApiToken: []
@@ -449,12 +449,12 @@ paths:
                 provider:
                   $ref: "#/components/schemas/provider"
                 playlist_id:
-                  $ref: "#/components/schemas/playlist_id"
+                  $ref: "#/components/schemas/provider_playlist_id"
               required:
                 - url_name
                 - room_name
                 - description
-                - provider  
+                - provider
       responses:
         "200":
           description: 作成されたRoom情報が返される
@@ -464,7 +464,7 @@ paths:
                 type: object
                 properties:
                   id:
-                    $ref: "#/components/schemas/room_id"
+                    $ref: "#/components/schemas/room_unique_id"
                   owner_user_id:
                     $ref: "#/components/schemas/owner_user_id"
                   display_id:
@@ -474,7 +474,7 @@ paths:
                   description:
                     $ref: "#/components/schemas/description"
                   playlist_id:
-                    $ref: "#/components/schemas/playlist_id"
+                    $ref: "#/components/schemas/provider_playlist_id"
                   provider:
                     $ref: "#/components/schemas/provider"
                   room_cooltime:
@@ -482,7 +482,7 @@ paths:
                   created_at:
                     $ref: "#/components/schemas/created_at"
                   updated_at:
-                    $ref: "#/components/schemas/updated_at"      
+                    $ref: "#/components/schemas/updated_at"
         "400":
           $ref: "#/components/responses/BadRequestOrAlreadyExists"
         "401":
@@ -491,7 +491,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "500":
           description: Roomの作成に失敗した
-  /mc/room/{roomId}:
+  /mc/room/{room_id}:
     get:
       summary: Room情報表示
       tags:
@@ -564,7 +564,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/letters:
+  /mc/room/{room_id}/letters:
     get:
       summary: Room内のお便り情報取得
       tags:
@@ -586,7 +586,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/letter/{letterId}:
+  /mc/room/{room_id}/letter/{letterId}:
     delete:
       summary: Room内のお便り削除
       tags:
@@ -603,7 +603,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/musics:
+  /mc/room/{room_id}/musics:
     get:
       summary: Room内の音楽情報取得
       tags:
@@ -625,7 +625,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/music/{musicId}:
+  /mc/room/{room_id}/music/{musicId}:
     delete:
       summary: 音楽削除
       tags:
@@ -642,7 +642,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/playlist:
+  /mc/room/{room_id}/playlist:
     get:
       summary: ルームに連携されているプレイリストの楽曲一覧を取得
       tags:
@@ -668,7 +668,7 @@ paths:
           $ref: "#/components/responses/ProviderIsNotLinked"
         "404":
           $ref: "#/components/responses/NotFound"
-  /mc/room/{roomId}/playlist/music:
+  /mc/room/{room_id}/playlist/music:
     post:
       summary: ルームに連携されているプレイリストに楽曲を追加
       tags:
@@ -731,7 +731,7 @@ paths:
 components:
   parameters:
     room_id:
-      name: roomId
+      name: room_id
       in: path
       description: Room表示ID
       example: dj_event_a_22
@@ -786,7 +786,7 @@ components:
       required: true
       example: http://localhost:3000/api/spotify/callback
       description: ログイン成功時のリダイレクトURL
-    provider:
+    provider_name:
       name: provider
       in: path
       description: プロバイダ識別子
@@ -842,7 +842,7 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/room_id"
+          $ref: "#/components/schemas/room_unique_id"
         owner_user_id:
           $ref: "#/components/schemas/owner_user_id"
         display_id:
@@ -852,7 +852,7 @@ components:
         description:
           $ref: "#/components/schemas/description"
         playlist_id:
-          $ref: "#/components/schemas/playlist_id"
+          $ref: "#/components/schemas/provider_playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
         room_cooltime:
@@ -875,7 +875,7 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/room_id"
+          $ref: "#/components/schemas/room_unique_id"
         owner_user_id:
           $ref: "#/components/schemas/owner_user_id"
         display_id:
@@ -885,7 +885,7 @@ components:
         description:
           $ref: "#/components/schemas/description"
         playlist_id:
-          $ref: "#/components/schemas/playlist_id"
+          $ref: "#/components/schemas/provider_playlist_id"
         provider:
           $ref: "#/components/schemas/provider"
         room_cooltime:
@@ -924,9 +924,9 @@ components:
       description: お便り
       properties:
         id:
-          $ref: "#/components/schemas/letter_id"
+          $ref: "#/components/schemas/letter_unique_id"
         room_id:
-          $ref: "#/components/schemas/room_id"
+          $ref: "#/components/schemas/room_unique_id"
         radio_name:
           $ref: "#/components/schemas/radio_name"
         message:
@@ -972,11 +972,11 @@ components:
       description: リクエストに保存される曲情報
       properties:
         id:
-          $ref: "#/components/schemas/music_id"
+          $ref: "#/components/schemas/music_unique_id"
         provided_music_id:
           $ref: "#/components/schemas/provided_music_id"
         letter_id:
-          $ref: "#/components/schemas/letter_id"
+          $ref: "#/components/schemas/letter_unique_id"
         artists:
           $ref: "#/components/schemas/artists"
         album:
@@ -1002,9 +1002,9 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/letter_id"
+          $ref: "#/components/schemas/letter_unique_id"
         room_id:
-          $ref: "#/components/schemas/room_id"
+          $ref: "#/components/schemas/room_unique_id"
         radio_name:
           $ref: "#/components/schemas/radio_name"
         message:
@@ -1030,11 +1030,11 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/music_id"
+          $ref: "#/components/schemas/music_unique_id"
         provided_music_id:
           $ref: "#/components/schemas/provided_music_id"
         letter_id:
-          $ref: "#/components/schemas/letter_id"
+          $ref: "#/components/schemas/letter_unique_id"
         artists:
           $ref: "#/components/schemas/artists"
         album:
@@ -1063,13 +1063,13 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/playlist_id"
+          $ref: "#/components/schemas/provider_playlist_id"
         name:
-          $ref: "#/components/schemas/playlist_name"
+          $ref: "#/components/schemas/provider_playlist_name"
         image_url:
-          $ref: "#/components/schemas/playlist_thumbnail"
+          $ref: "#/components/schemas/provider_playlist_thumbnail"
         description:
-          $ref: "#/components/schemas/playlist_description"
+          $ref: "#/components/schemas/provider_playlist_description"
         provider:
           $ref: "#/components/schemas/provider"
       required:
@@ -1182,7 +1182,7 @@ components:
         - is_connected
 
     # Room
-    room_id:
+    room_unique_id:
       type: number
       format: number
       description: RoomID
@@ -1201,7 +1201,7 @@ components:
     provider:
       type: string
       example: spotify
-      description: 連携するストリーミングサービスの識別子。現在は"spotify"のみ有効。
+      description: 連携するストリーミングサービスの識別子。
     owner_user_id:
       type: integer
       description: オーナーのユーザーID(プレイリストを紐づけている人)
@@ -1212,7 +1212,7 @@ components:
       description: ユーザーがリクエストを投稿後、再度リクエスト出来るまでの時間
 
     # Letter
-    letter_id:
+    letter_unique_id:
       type: string
       description: お便りID
     radio_name:
@@ -1225,7 +1225,7 @@ components:
       description: お便り本文
 
     # Music
-    music_id:
+    music_unique_id:
       type: number
       example: 1
       description: MusicID
@@ -1260,20 +1260,20 @@ components:
       description: 曲の長さ（秒）
 
     # Playlist
-    playlist_id:
+    provider_playlist_id:
       type: string
       description: 音楽サービスのプレイリストID
       example: MGsb9KPq
-    playlist_name:
+    provider_playlist_name:
       type: string
       description: プレイリスト名
       example: DJ EVENT A
-    playlist_thumbnail:
+    provider_playlist_thumbnail:
       type: string
       format: url
       description: プレイリストのサムネイル画像URL
       example: DJ EVENT A
-    playlist_description:
+    provider_playlist_description:
       type: string
       description: プレイリスト概要
       example: イベントA 22年 - Generated by DJ Gassi
@@ -1299,7 +1299,7 @@ components:
         message:
           type: string
           description: エラーメッセージ
-        
+
   securitySchemes:
     ApiToken:
       type: apiKey
