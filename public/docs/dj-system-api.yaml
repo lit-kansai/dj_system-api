@@ -767,7 +767,7 @@ components:
       example: 12
       schema:
         type: string
-      required: false
+      required: true
     google_redirect_url:
       in: query
       name: redirect_url
@@ -787,7 +787,7 @@ components:
       example: http://localhost:3000/api/spotify/callback
       description: ログイン成功時のリダイレクトURL
     provider_name:
-      name: provider
+      name: provider_name
       in: path
       description: プロバイダ識別子
       example: spotify
