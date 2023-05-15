@@ -767,7 +767,7 @@ components:
       example: 12
       schema:
         type: string
-      required: true
+      required: false
     google_redirect_url:
       in: query
       name: redirect_url
