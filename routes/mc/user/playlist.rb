@@ -1,6 +1,6 @@
 class McUserPlaylistRouter < Base
-  before "/:provider" do
-    halt not_found_error("provider not found") unless params[:provider]
+  before "/:provider_name" do
+    halt not_found_error("provider not found") unless params[:provider_name]
   end
 
   # ユーザーのプレイリスト一覧
@@ -18,8 +18,8 @@ class McUserPlaylistRouter < Base
   end
 
   # ユーザーのプレイリスト一覧（プロバイダ別）
-  get "/:provider" do
-    case params[:provider]
+  get "/:provider_name" do
+    case params[:provider_name]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       send_json @env["spotify"].get_playlists
@@ -32,8 +32,8 @@ class McUserPlaylistRouter < Base
   end
 
   # プレイリストの楽曲一覧
-  get "/:provider/:playlist_id" do
-    case params[:provider]
+  get "/:provider_name/:playlist_id" do
+    case params[:provider_name]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       res = @env["spotify"].get_playlist_tracks(params[:playlist_id])
@@ -50,9 +50,9 @@ class McUserPlaylistRouter < Base
   end
 
   # プレイリスト作成
-  post "/:provider" do
+  post "/:provider_name" do
     return bad_request("invalid parameters") unless has_params?(params, [:name])
-    case params[:provider]
+    case params[:provider_name]
     when 'spotify'
       return forbidden("provider is not linked") unless @env["spotify"]
       res = @env["spotify"].create_playlist(params[:name], params[:description])
