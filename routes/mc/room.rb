@@ -55,7 +55,7 @@ class McRoomRouter < Base
         playlist_id = res['id']
       when 'applemusic'
         res = @env["applemusic"].create_playlist(params[:room_name], params[:description])
-        playlist_id = res['id']
+        playlist_id = res['data'][0]['id']
       end
     end
 
