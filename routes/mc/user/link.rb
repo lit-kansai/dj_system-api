@@ -5,6 +5,12 @@ class McUserLinkRouter < Base
     send_json(redirect_url: MusicApi::SpotifyApi.get_oauth_url(params['redirect_url']))
   end
 
+  #Spotifyの連携解除
+  delete "/spotify"do
+    @env["user"].access_tokens.find_or_create_by(provider: 'spotify').delete
+    send_json(ok: true)
+  end
+
   # Spotify後に呼び出すAPI
   post "/spotify/callback" do
     return bad_request("invalid parameters") unless has_params?(params, [:code, :redirect_url])
