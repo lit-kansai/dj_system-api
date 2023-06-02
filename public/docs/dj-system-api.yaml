@@ -240,6 +240,28 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    delete:
+      summary: Spotifyアカウントの連携解除
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect_url:
+                    $ref: "#/components/schemas/login_url"
+                required:
+                  - redirect_url
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /mc/user/link/spotify/callback:
     post:
       summary: Step.2 Spotify連携ログイン用Callback
