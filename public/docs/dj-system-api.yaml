@@ -248,20 +248,12 @@ paths:
         - ApiToken: []
       responses:
         "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  redirect_url:
-                    $ref: "#/components/schemas/login_url"
-                required:
-                  - redirect_url
+          $ref: "#/components/responses/OK"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        
   /mc/user/link/spotify/callback:
     post:
       summary: Step.2 Spotify連携ログイン用Callback
@@ -308,6 +300,19 @@ paths:
                     $ref: "#/components/schemas/access_token"
                 required:
                   - access_token
+    delete:
+      summary: AppleMusicアカウントの連携解除
+      tags:
+        - /mc/user
+      security:
+        - ApiToken: []
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /mc/user/link/applemusic/callback:
     post:
       summary: Step.2 AppleMusic連携ログイン用Callback

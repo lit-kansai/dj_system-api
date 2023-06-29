@@ -7,7 +7,10 @@ class McUserLinkRouter < Base
 
   #Spotifyの連携解除
   delete "/spotify"do
-    @env["user"].access_tokens.find_or_create_by(provider: 'spotify').delete
+    @env["user"].access_tokens.find_or_create_by(provider: 'spotify').user.rooms.each do |room|
+      room.destroy
+    end
+    @env["user"].access_tokens.find_or_create_by(provider: 'spotify').destroy
     send_json(ok: true)
   end
 
@@ -26,6 +29,15 @@ class McUserLinkRouter < Base
   get "/applemusic" do
     access_token = MusicApi::AppleMusicApi.generate_access_token()
     send_json(access_token: access_token)
+  end
+
+  # Apple Musicの連携解除
+  delete "/applemusic" do
+    @env["user"].access_tokens.find_or_create_by(provider: 'applemusic').user.rooms.each do |room|
+      room.destroy
+    end
+    @env["user"].access_tokens.find_or_create_by(provider: 'applemusic').destroy
+    send_json(ok: true)
   end
 
   # Apple Music連携後のリダイレクト先
