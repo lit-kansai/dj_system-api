@@ -1,5 +1,7 @@
 require_relative './room/playlist'
 
+SUPPORTED_PROVIDERS = ['spotify', 'applemusic']
+
 class McRoomRouter < Base
   before do
     # room内のプレイリスト取得を認証しない
@@ -84,7 +86,14 @@ class McRoomRouter < Base
 
   # 全room情報取得(管理可能なroomのみ)
   get "/" do
-    send_json @env["user"].rooms.as_json()
+    providers = @env["user"].access_tokens.where.not(provider: "google")
+    valid_provider = []
+    SUPPORTED_PROVIDERS.each do |provider|
+      if !(providers.find_by(provider: provider).nil?)
+        valid_provider.push(provider)
+      end
+    end
+    send_json @env["user"].rooms.where(provider:valid_provider).as_json()
   end
 
   # room個別情報更新
