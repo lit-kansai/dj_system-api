@@ -93,7 +93,7 @@ class McRoomRouter < Base
         valid_provider.push(provider)
       end
     end
-    send_json @env["user"].rooms.where(provider:valid_provider).as_json()
+    send_json @env["user"].rooms.where(provider: valid_provider).as_json()
   end
 
   # room個別情報更新
