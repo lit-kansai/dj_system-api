@@ -1,13 +1,25 @@
 require_relative './room/playlist'
 
+SUPPORTED_PROVIDERS = ['spotify', 'applemusic']
+
 class McRoomRouter < Base
   before do
-    halt unauthorized unless @env["user"]
+    # room内のプレイリスト取得を認証しない
+    if request.path_info.split("/")[-1] == 'musics'
+      return
+    else
+      halt unauthorized unless @env["user"]
+    end
   end
 
   # ルームIDが必要なURIの場合 @env["room"] にルーム情報を入れる
   before "/:room_id*" do
-    @env["room"] = @env["user"].rooms.find_by(display_id: params[:room_id])
+    if @env["user"]
+      @env["room"] = @env["user"].rooms.find_by(display_id: params[:room_id])
+    # room内のプレイリスト取得時は、DBからroom_idによりroomを取得する
+    elsif request.path_info.split("/")[-1] == 'musics'
+      @env["room"] = Room.find_by(display_id: params[:room_id])
+    end
     halt not_found_error("Room not found") if @env["room"].nil?
   end
 
@@ -74,7 +86,14 @@ class McRoomRouter < Base
 
   # 全room情報取得(管理可能なroomのみ)
   get "/" do
-    send_json @env["user"].rooms.as_json()
+    providers = @env["user"].access_tokens.where.not(provider: "google")
+    valid_provider = []
+    SUPPORTED_PROVIDERS.each do |provider|
+      if !(providers.find_by(provider: provider).nil?)
+        valid_provider.push(provider)
+      end
+    end
+    send_json @env["user"].rooms.where(provider: valid_provider).as_json()
   end
 
   # room個別情報更新
@@ -109,8 +128,6 @@ class McRoomRouter < Base
     @musics = @env["room"].musics.order(created_at: "DESC").as_json(include: [:letter])
     send_json @musics
   end
-
-
 
   # room内お便り削除
   delete "/:room_id/letter/:letter_id" do

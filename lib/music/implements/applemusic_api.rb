@@ -107,10 +107,10 @@ module MusicApi
         res = @apple_music_api.get "me/library/playlists/#{playlist_id}/tracks"
       end
       body = JSON.parse(res.body)
-      return nil unless res.status >= 200 && res.status < 300
+      return [] unless res.status >= 200 && res.status < 300
       body['data'].map { |item|
         {
-          id: item['id'],
+          id: item['attributes']['playParams']['catalogId'],
           artists: item['attributes']['artistName'],
           album: item['attributes']['albumName'],
           thumbnail: item['attributes']['artwork']['url'].to_s.gsub(/({w}|{h})/, '3000'),
@@ -169,7 +169,7 @@ module MusicApi
         ]
       }
       playlist_tracks = get_playlist_tracks(playlist_id)
-      unless playlist_tracks == nil || playlist_tracks.all? {|t| t[:id] != track_id }
+      unless playlist_tracks.all? {|t| t[:id] != track_id }
         return nil
       end
       res = @apple_music_api.post "me/library/playlists/#{playlist_id}/tracks", JSON.generate(data)
@@ -191,7 +191,7 @@ module MusicApi
 
       time_now = Time.now.to_i
       time_expired = Time.now.to_i + hours_to_live * 3600
-      
+
       payload = {
         'iss': teamId,
         'iat': time_now,
@@ -215,7 +215,7 @@ module MusicApi
 
         time_now = Time.now.to_i
         time_expired = Time.now.to_i + hours_to_live * 3600
-        
+
         payload = {
           'iss': teamId,
           'iat': time_now,
